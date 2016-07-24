@@ -1,31 +1,28 @@
 # Spatial Media Metadata Injector
 
-A tool for manipulating spatial media ([spherical video]
-(../docs/spherical-video-rfc.md) and [spatial audio]
-(../docs/spatial-audio-rfc.md)) metadata in MP4 and MOV files. It can be used to
-inject spatial media metadata into a file or validate metadata in an existing
-file.
+A tool for manipulating spatial media ([spherical video])
+This is a port from the python scripts provided by google to C++ by Varol Okan
+
+It can be used to inject spatial media metadata into a file or validate 
+metadata in an existing file.
 
 ## Usage
 
-[Python 2.7](https://www.python.org/downloads/) must be used to run the tool.
-From within the directory above `spatialmedia`:
-
 #### Help
 
-    python spatialmedia -h
+    spatialmedia -h
 
 Prints help and usage information.
 
 #### Examine
 
-    python spatialmedia <files...>
+    spatialmedia <files...>
 
 For each file specified, prints spatial media metadata contained in the file.
 
 #### Inject
 
-    python spatialmedia -i [--stereo=(none|top-bottom|left-right)] [--spatial-audio] <input> <output>
+    spatialmedia -i [--stereo=(none|top-bottom|left-right)] [--spatial-audio] <input> <output>
 
 Saves a version of `<input>` injected with spatial media metadata to `<output>`.
 `<input>` and `<output>` must not be the same file.
@@ -33,7 +30,7 @@ Saves a version of `<input>` injected with spatial media metadata to `<output>`.
 ##### --stereo
 
 Selects the left/right eye frame layout; see the `StereoMode` element in the
-[Spherical Video RFC](../docs/spherical-video-rfc.md) for more information.
+[Spherical Video RFC](https://github.com/google/spatial-media/tree/master/docs/spherical-video-rfc.md) for more information.
 
 Options:
 
@@ -52,9 +49,3 @@ Enables injection of spatial audio metadata. If enabled, the file must contain a
 normalization; see the [Spatial Audio RFC](../docs/spatial-audio-rfc.md) for
 more information.
 
-## Building standalone GUI application
-
-Install [PyInstaller](http://pythonhosted.org/PyInstaller/), then run the
-following:
-
-    pyinstaller spatial_media_metadata_injector.spec
