@@ -18,8 +18,31 @@
 
 #include <iostream>
 
+#include "parser.h"
+
 int main ( int argc, char *argv[] )
 {
+  SpatialMedia::Parser parser;
+/*
+patialMedia
+{
+
+Parser::Parser ( )
+{
+  m_bInject       = true;
+  m_StereoMode    = SM_NONE;
+  m_crop[]        = { 0,0,0,0,0,0 };
+  m_bSpatialAudio = false;
+}
+
+Parser::~Parser ( )
+{
+}
+
+void Parser::parseCommandLine ( int argc, char *argv[] )
+*/
+
+  parser.parseCommandLine ( argc, argv );
 
   return 0;
 }
