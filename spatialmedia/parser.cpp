@@ -151,7 +151,7 @@ std::string &Parser::getOutFile ( )
   return m_strOutFile;
 }
 
-bool Parser::getInjet ( )
+bool Parser::getInject ( )
 {
   return m_bInject;
 }

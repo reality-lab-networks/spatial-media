@@ -17,32 +17,41 @@
  ****************************************************************************/
 
 #include <iostream>
+#include <stdlib.h>
 
 #include "parser.h"
+#include "metadata_utils.h"
+
+using namespace std;
 
 int main ( int argc, char *argv[] )
 {
   SpatialMedia::Parser parser;
-/*
-patialMedia
-{
-
-Parser::Parser ( )
-{
-  m_bInject       = true;
-  m_StereoMode    = SM_NONE;
-  m_crop[]        = { 0,0,0,0,0,0 };
-  m_bSpatialAudio = false;
-}
-
-Parser::~Parser ( )
-{
-}
-
-void Parser::parseCommandLine ( int argc, char *argv[] )
-*/
-
   parser.parseCommandLine ( argc, argv );
+  if ( parser.getInFile ( ) == "" )  {
+    cout << "Please [provide an input file." << endl;
+    exit ( -1 );
+  }
+
+  Utils utils;
+  if ( parser.getInject ( ) )  {
+    if ( parser.getOutFile ( ) == "" )  {
+      cout << "Injecting metadata requires both input and output file." << endl;
+      exit ( -2 );
+    }
+    Metadata md;
+    std::string &strVideoXML = utils.generate_spherical_xml ( parser.getStereoMode ( ), parser.getCrop ( ) );
+    md.setVideoXML ( strVideoXML );
+    if ( parser.getSpatialAudio ( ) )
+      md.setAudio ( (void *)&g_DefAudioMetadata );
+    if ( strVideoXML.length ( ) > 1 )
+      utils.inject_metadata ( parser.getInFile ( ), parser.getOutFile ( ), &md );
+    else
+      cout << "Failed to generate metadata." << endl;
+  }
+  else  {
+    utils.parse_metadata ( parser.getInFile ( ) );
+  }
 
   return 0;
 }

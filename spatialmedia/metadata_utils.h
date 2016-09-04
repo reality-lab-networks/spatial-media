@@ -17,11 +17,16 @@
  * 
  ****************************************************************************/
 
+#ifndef __METADATA_UTILS_H__
+#define __METADATA_UTILS_H__
+
 #include <stdint.h>
 #include <string>
 #include <map>
 
 #include "mxml.h"
+
+#include "parser.h"
 
 // Utilities for examining/injecting spatial media metadata in MP4/MOV files."""
 
@@ -59,26 +64,6 @@ static std::string SPHERICAL_XML_CONTENTS_CROP_FORMAT = "<GSpherical:CroppedArea
     "<GSpherical:CroppedAreaTopPixels>{5}</GSpherical:CroppedAreaTopPixels>";
 
 static std::string SPHERICAL_XML_FOOTER = "</rdf:SphericalVideo>";
-
-const char *SPHERICAL_TAGS_LIST[] = {
-    "Spherical",
-    "Stitched",
-    "StitchingSoftware",
-    "ProjectionType",
-    "SourceCount",
-    "StereoMode",
-    "InitialViewHeadingDegrees",
-    "InitialViewPitchDegrees",
-    "InitialViewRollDegrees",
-    "Timestamp",
-    "CroppedAreaImageWidthPixels",
-    "CroppedAreaImageHeightPixels",
-    "FullPanoWidthPixels",
-    "FullPanoHeightPixels",
-    "CroppedAreaLeftPixels",
-    "CroppedAreaTopPixels",
-};
-
 static std::string SPHERICAL_PREFIX = "{http://ns.google.com/videos/1.0/spherical/}";
 
 struct SPATIAL_AUDIO_DEFAULT_METADATA {
@@ -95,7 +80,7 @@ struct SPATIAL_AUDIO_DEFAULT_METADATA {
   std::string ambisonic_channel_ordering;
   std::string ambisonic_normalization;
   uint32_t channel_map[4];
-} static PATIAL_AUDIO_DEFAULT_METADATA;
+} static g_DefAudioMetadata;
 
 class Box;
 class Mpeg4Container;
@@ -106,8 +91,11 @@ class Metadata
     Metadata ( );
     virtual ~Metadata ( );
 
+    void setVideoXML ( std::string & );
+    void setAudio ( void * );
 
   private:
+    std::string m_strVideoXML;
     std::map<std::string, mxml_node_t *> m_mapVideo;
     void *m_pAudio;
 };
@@ -141,13 +129,18 @@ class Utils
     void parse_mpeg4     ( std::string & );
     void inject_mpeg4    ( std::string &, std::string &, Box * );
     void parse_metadata  ( std::string & );
-    void inject_metadata ( std::string &, std::string &, Box * );
-    void generate_spherical_xml ( bool, bool );
+    void inject_metadata ( std::string &, std::string &, Metadata * );
+    std::string &generate_spherical_xml ( SpatialMedia::Parser::enMode, int * );
     void get_descriptor_length  ( std::fstream & );
     int32_t  get_expected_num_audio_components ( std::string &, uint32_t );
     int32_t  get_num_audio_channels ( Box *, std::fstream & );
     uint32_t get_sample_description_num_channels ( Box *, std::fstream & ); 
     int32_t  get_aac_num_channels ( Box *, std::fstream & );
     uint32_t get_num_audio_tracks ( Mpeg4Container *, std::fstream & );
+
+  private:
+    std::string m_strSphericalXML;
 };
+
+#endif // __METADATA_UTILS_H__
 

@@ -28,7 +28,7 @@ class Parser
 
     std::string &getInFile      ( );
     std::string &getOutFile     ( );
-    bool         getInjet       ( );
+    bool         getInject      ( );
     enMode       getStereoMode  ( );
     int         *getCrop        ( );
     bool         getSpatialAudio( );

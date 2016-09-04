@@ -18,15 +18,44 @@
 
 #include "metadata_utils.h"
 
+const char *SPHERICAL_TAGS_LIST[] = {
+    "Spherical",
+    "Stitched",
+    "StitchingSoftware",
+    "ProjectionType",
+    "SourceCount",
+    "StereoMode",
+    "InitialViewHeadingDegrees",
+    "InitialViewPitchDegrees",
+    "InitialViewRollDegrees",
+    "Timestamp",
+    "CroppedAreaImageWidthPixels",
+    "CroppedAreaImageHeightPixels",
+    "FullPanoWidthPixels",
+    "FullPanoHeightPixels",
+    "CroppedAreaLeftPixels",
+    "CroppedAreaTopPixels",
+};
+
 
 Metadata::Metadata ( )
 {
-
+  m_pAudio = NULL;
 }
 
 Metadata::~Metadata ( )
 {
 
+}
+
+void Metadata::setVideoXML ( std::string &str )
+{
+  m_strVideoXML = str;
+}
+
+void Metadata::setAudio ( void *pAudio )
+{
+  m_pAudio = pAudio;
 }
 
 ParsedMetadata::ParsedMetadata ( )
@@ -101,14 +130,15 @@ void Utils::parse_metadata ( std::string & )
 
 }
 
-void Utils::inject_metadata ( std::string &, std::string &, Box * )
+void Utils::inject_metadata ( std::string &, std::string &, Metadata * )
 {
 
 }
 
-void Utils::generate_spherical_xml ( bool, bool )
+std::string &Utils::generate_spherical_xml ( SpatialMedia::Parser::enMode, int * )
 {
 
+  return m_strSphericalXML;
 }
 
 void Utils::get_descriptor_length ( std::fstream & )
