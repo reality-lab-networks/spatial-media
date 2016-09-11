@@ -16,6 +16,9 @@
  * 
  ****************************************************************************/
 
+#include "mpeg/constants.h"
+#include "mpeg/box.h"
+
 #include "metadata_utils.h"
 
 const char *SPHERICAL_TAGS_LIST[] = {
@@ -79,101 +82,6 @@ Utils::~Utils ( )
 
 }
 
-Box *Utils::spherical_uuid ( std::string & )
-{
-  Box *p = NULL;
-  return p;
-}
-
-bool Utils::mpeg4_add_spherical ( Mpeg4Container *, std::string & )
-{
-  return false;
-}
-
-bool Utils::mpeg4_add_spatial_audio ( Mpeg4Container *, SPATIAL_AUDIO_DEFAULT_METADATA * )
-{
-  return false;
-}
-
-bool Utils::mpeg4_add_audio_metadata ( Mpeg4Container *, std::fstream &, SPATIAL_AUDIO_DEFAULT_METADATA * )
-{
-  return false;
-}
-
-bool Utils::inject_spatial_audio_atom( std::fstream &, Box *, SPATIAL_AUDIO_DEFAULT_METADATA * )
-{
-  return false;
-}
-
-void Utils::parse_spherical_xml ( Box * ) // return sphericalDictionary
-{
-
-}
-
-void Utils::parse_spherical_mpeg4 ( Mpeg4Container *,std::fstream & ) // return metadata
-{
-
-}
-
-void Utils::parse_mpeg4 ( std::string & )
-{
-
-}
-
-void Utils::inject_mpeg4 ( std::string &, std::string &, Box * )
-{
-
-}
-
-void Utils::parse_metadata ( std::string & )
-{
-
-}
-
-void Utils::inject_metadata ( std::string &, std::string &, Metadata * )
-{
-
-}
-
-std::string &Utils::generate_spherical_xml ( SpatialMedia::Parser::enMode, int * )
-{
-
-  return m_strSphericalXML;
-}
-
-void Utils::get_descriptor_length ( std::fstream & )
-{
-
-}
-
-int32_t Utils::get_expected_num_audio_components ( std::string &, uint32_t )
-{
-  return -1;
-}
-
-int32_t Utils::get_num_audio_channels ( Box *, std::fstream & )
-{
-  return -1;
-}
-
-uint32_t Utils::get_sample_description_num_channels ( Box *, std::fstream & )
-{
-  return 0;
-}
-
-int32_t Utils::get_aac_num_channels ( Box *, std::fstream & )
-{
-  return -1;
-}
-
-uint32_t Utils::get_num_audio_tracks ( Mpeg4Container *, std::fstream & )
-{
-  return 0;
-}
-
-
-
-
 /*
 SPHERICAL_PREFIX = "{http://ns.google.com/videos/1.0/spherical/}"
 SPHERICAL_TAGS = dict()
@@ -182,32 +90,35 @@ for tag in SPHERICAL_TAGS_LIST:
 
 integer_regex_group = "(\d+)"
 crop_regex = "^{0}$".format(":".join([integer_regex_group] * 6))
+*/
 
 
-def spherical_uuid(metadata):
-    """Constructs a uuid containing spherical metadata.
+Box *Utils::spherical_uuid ( std::string &strMetadata )
+{
+  // Constructs a uuid containing spherical metadata.
+  Box *p = new Box;
+  // a box containing spherical metadata.
+//  if ( strUUID.length ( ) != 16 )
+//    std::cerr << "ERROR: Data mismatch" << std::endl;
+  int iSize = strMetadata.size ( );
+  const uint8_t *pMetadata = reinterpret_cast<const uint8_t*>(strMetadata.c_str());
 
-    Args:
-      metadata: String, xml to inject in spherical tag.
+  memcpy ( p->m_name, constants::TAG_UUID, 4 );
+  p->m_iHeaderSize  = 8;
+  p->m_iContentSize = 0;
+  p->m_pContents    = new uint8_t[iSize + 16 + 1];
+  memcpy ( p->m_pContents, SPHERICAL_UUID_ID, 16 );
+  memcpy ((p->m_pContents+16),  pMetadata, iSize );
+  p->m_iContentSize=iSize+16;
 
-    Returns:
-      uuid_leaf: a box containing spherical metadata.
-    """
-    uuid_leaf = mpeg.Box()
-    assert(len(SPHERICAL_UUID_ID) == 16)
-    uuid_leaf.name = mpeg.constants.TAG_UUID
-    uuid_leaf.header_size = 8
-    uuid_leaf.content_size = 0
+  return p;
+}
 
-    uuid_leaf.contents = SPHERICAL_UUID_ID + metadata
-    uuid_leaf.content_size = len(uuid_leaf.contents)
-
-    return uuid_leaf
-
-
-def mpeg4_add_spherical(mpeg4_file, in_fh, metadata):
-    """Adds a spherical uuid box to an mpeg4 file for all video tracks.
-
+bool Utils::mpeg4_add_spherical ( Mpeg4Container *, std::string & )
+{
+  // Adds a spherical uuid box to an mpeg4 file for all video tracks.
+/*
+  def mpeg4_add_spherical(mpeg4_file, in_fh, metadata):
     Args:
       mpeg4_file: mpeg4, Mpeg4 file structure to add metadata.
       in_fh: file handle, Source for uncached file contents.
@@ -236,7 +147,13 @@ def mpeg4_add_spherical(mpeg4_file, in_fh, metadata):
 
     mpeg4_file.resize()
     return True
+*/
+  return false;
+}
 
+bool Utils::mpeg4_add_spatial_audio ( Mpeg4Container *, SPATIAL_AUDIO_DEFAULT_METADATA * )
+{
+/*
 def mpeg4_add_spatial_audio(mpeg4_file, in_fh, audio_metadata, console):
     """Adds spatial audio metadata to the first audio track of the input
        mpeg4_file. Returns False on failure.
@@ -262,7 +179,13 @@ def mpeg4_add_spatial_audio(mpeg4_file, in_fh, audio_metadata, console):
                         return inject_spatial_audio_atom(
                             in_fh, sub_element, audio_metadata, console)
     return True
+*/
+  return false;
+}
 
+bool Utils::mpeg4_add_audio_metadata ( Mpeg4Container *, std::fstream &, SPATIAL_AUDIO_DEFAULT_METADATA * )
+{
+/*
 def mpeg4_add_audio_metadata(mpeg4_file, in_fh, audio_metadata, console):
     num_audio_tracks = get_num_audio_tracks(mpeg4_file, in_fh)
     if num_audio_tracks > 1:
@@ -270,7 +193,13 @@ def mpeg4_add_audio_metadata(mpeg4_file, in_fh, audio_metadata, console):
         return False
 
     return mpeg4_add_spatial_audio(mpeg4_file, in_fh, audio_metadata, console)
+*/
+  return false;
+}
 
+bool Utils::inject_spatial_audio_atom( std::fstream &, Box *, SPATIAL_AUDIO_DEFAULT_METADATA * )
+{
+/*
 def inject_spatial_audio_atom(
     in_fh, audio_media_atom, audio_metadata, console):
     for atom in audio_media_atom.contents:
@@ -307,7 +236,13 @@ def inject_spatial_audio_atom(
                             num_channels, audio_metadata)
                         sample_description.contents.append(sa3d_atom)
     return True
+*/
+  return false;
+}
 
+void Utils::parse_spherical_xml ( Box * ) // return sphericalDictionary
+{
+/*
 def parse_spherical_xml(contents, console):
     """Returns spherical metadata for a set of xml data.
 
@@ -346,8 +281,12 @@ def parse_spherical_xml(contents, console):
             console("\t\tUnknown: " + tag + " = " + child.text)
 
     return sphericalDictionary
+*/
+}
 
-
+void Utils::parse_spherical_mpeg4 ( Mpeg4Container *,std::fstream & ) // return metadata
+{
+/*
 def parse_spherical_mpeg4(mpeg4_file, fh, console):
     """Returns spherical metadata for a loaded mpeg4 file.
 
@@ -402,7 +341,12 @@ def parse_spherical_mpeg4(mpeg4_file, fh, console):
                                         sa3d_elem.print_box(console)
                                         metadata.audio = sa3d_elem
     return metadata
+*/
+}
 
+void Utils::parse_mpeg4 ( std::string & )
+{
+/*
 def parse_mpeg4(input_file, console):
     with open(input_file, "rb") as in_fh:
         mpeg4_file = mpeg.load(in_fh)
@@ -415,8 +359,12 @@ def parse_mpeg4(input_file, console):
 
     console("Error \"" + input_file + "\" does not exist or do not have "
             "permission.")
+*/
+}
 
-
+void Utils::inject_mpeg4 ( std::string &, std::string &, Box * )
+{
+/*
 def inject_mpeg4(input_file, output_file, metadata, console):
     with open(input_file, "rb") as in_fh:
 
@@ -441,7 +389,12 @@ def inject_mpeg4(input_file, output_file, metadata, console):
 
     console("Error file: \"" + input_file + "\" does not exist or do not have "
             "permission.")
+*/
+}
 
+void Utils::parse_metadata ( std::string & )
+{
+/*
 def parse_metadata(src, console):
     infile = os.path.abspath(src)
 
@@ -460,8 +413,12 @@ def parse_metadata(src, console):
 
     console("Unknown file type")
     return None
+*/
+}
 
-
+void Utils::inject_metadata ( std::string &, std::string &, Metadata * )
+{
+/*
 def inject_metadata(src, dest, metadata, console):
     infile = os.path.abspath(src)
     outfile = os.path.abspath(dest)
@@ -486,8 +443,12 @@ def inject_metadata(src, dest, metadata, console):
         return
 
     console("Unknown file type")
+*/
+}
 
-
+std::string &Utils::generate_spherical_xml ( SpatialMedia::Parser::enMode, int * )
+{
+/*
 def generate_spherical_xml(stereo=None, crop=None):
     # Configure inject xml.
     additional_xml = ""
@@ -558,8 +519,13 @@ def generate_spherical_xml(stereo=None, crop=None):
                      additional_xml +
                      SPHERICAL_XML_FOOTER)
     return spherical_xml
+*/
+  return m_strSphericalXML;
+}
 
-
+void Utils::get_descriptor_length ( std::fstream & )
+{
+/*
 def get_descriptor_length(in_fh):
     """Derives the length of the MP4 elementary stream descriptor at the
        current position in the input file.
@@ -572,8 +538,12 @@ def get_descriptor_length(in_fh):
         if (ord(size_byte) != int("0x80", 0)):
             break
     return descriptor_length
+*/
+}
 
-
+int32_t Utils::get_expected_num_audio_components ( std::string &, uint32_t )
+{
+/*
 def get_expected_num_audio_components(ambisonics_type, ambisonics_order):
     """ Returns the expected number of ambisonic components for a given
         ambisonic type and ambisonic order.
@@ -593,7 +563,30 @@ def get_num_audio_channels(stsd, in_fh):
         elif sample_description.name in mpeg.constants.SOUND_SAMPLE_DESCRIPTIONS:
             return get_sample_description_num_channels(sample_description, in_fh)
     return -1
+*/
+  return -1;
+}
 
+int32_t Utils::get_num_audio_channels ( Box *, std::fstream & )
+{
+/*
+def get_num_audio_channels(stsd, in_fh):
+    if stsd.name != mpeg.constants.TAG_STSD:
+        print "get_num_audio_channels should be given a STSD box"
+        return -1
+    for sample_description in stsd.contents:
+        if sample_description.name == mpeg.constants.TAG_MP4A:
+            return get_aac_num_channels(sample_description, in_fh)
+        elif sample_description.name in mpeg.constants.SOUND_SAMPLE_DESCRIPTIONS:
+            return get_sample_description_num_channels(sample_description, in_fh)
+    return -1
+*/
+  return -1;
+}
+
+uint32_t Utils::get_sample_description_num_channels ( Box *, std::fstream & )
+{
+/*
 def get_sample_description_num_channels(sample_description, in_fh):
     """Reads the number of audio channels from a sound sample description.
     """
@@ -628,7 +621,13 @@ def get_sample_description_num_channels(sample_description, in_fh):
 
     in_fh.seek(p)
     return num_audio_channels
+*/
+  return 0;
+}
 
+int32_t Utils::get_aac_num_channels ( Box *, std::fstream & )
+{
+/*
 def get_aac_num_channels(box, in_fh):
     """Reads the number of audio channels from AAC's AudioSpecificConfig
        descriptor within the esds child box of the input mp4a or wave box.
@@ -682,8 +681,13 @@ def get_aac_num_channels(box, in_fh):
         channel_configuration = (int("0078", 16) & decoder_descriptor) >> 3
     in_fh.seek(p)
     return channel_configuration
+*/
+  return -1;
+}
 
-
+uint32_t Utils::get_num_audio_tracks ( Mpeg4Container *, std::fstream & )
+{
+/*
 def get_num_audio_tracks(mpeg4_file, in_fh):
     """ Returns the number of audio track in the input mpeg4 file. """
     num_audio_tracks = 0
@@ -700,6 +704,7 @@ def get_num_audio_tracks(mpeg4_file, in_fh):
                     if (in_fh.read(4) == mpeg.constants.TAG_SOUN):
                         num_audio_tracks += 1
     return num_audio_tracks
-
 */
+  return 0;
+}
 

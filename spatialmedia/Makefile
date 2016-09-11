@@ -19,7 +19,7 @@ mxml:
 	if [ ! -e ./third_party/mxml-2.10/libmxml.so.1.5 ]; then cd third_party/mxml-2.10; ./configure; make; cd ../../; fi
 
 $(appname): $(objects)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(appname) $(objects) $(LDLIBS)
+	$(CXX) $(CXXFLAGS) -o $(appname) $(objects) $(LDLIBS) $(LDFLAGS)
 
 depend: .depend
 
