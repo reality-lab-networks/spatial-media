@@ -30,8 +30,6 @@
 
 #include "box.h"
 
-class AudioMetadata;
-
 class SA3DBox : public Box
 {
   SA3DBox ( ) { };

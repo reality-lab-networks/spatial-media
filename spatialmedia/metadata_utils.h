@@ -28,6 +28,7 @@
 #include "mxml.h"
 
 #include "parser.h"
+#include "mpeg/constants.h"
 
 // Utilities for examining/injecting spatial media metadata in MP4/MOV files."""
 
@@ -67,21 +68,22 @@ static std::string SPHERICAL_XML_CONTENTS_CROP_FORMAT = "<GSpherical:CroppedArea
 static std::string SPHERICAL_XML_FOOTER = "</rdf:SphericalVideo>";
 static std::string SPHERICAL_PREFIX = "{http://ns.google.com/videos/1.0/spherical/}";
 
-struct SPATIAL_AUDIO_DEFAULT_METADATA {
-  SPATIAL_AUDIO_DEFAULT_METADATA ( )  {
-    ambisonic_order = 1;
-    ambisonic_type  = "periphonic";
-    ambisonic_channel_ordering = "ACN";
-    ambisonic_normalization    = "SN3D";
-    for ( uint32_t t=0; t<4; t++ )
-      channel_map[t] = t;
-  };
-  uint32_t ambisonic_order;
-  std::string ambisonic_type;
-  std::string ambisonic_channel_ordering;
-  std::string ambisonic_normalization;
-  uint32_t channel_map[4];
-} static g_DefAudioMetadata;
+//struct SPATIAL_AUDIO_DEFAULT_METADATA {
+//  SPATIAL_AUDIO_DEFAULT_METADATA ( )  {
+//    ambisonic_order = 1;
+//    ambisonic_type  = "periphonic";
+//    ambisonic_channel_ordering = "ACN";
+//    ambisonic_normalization    = "SN3D";
+//    for ( uint32_t t=0; t<4; t++ )
+//      channel_map[t] = t;
+//  };
+//  uint32_t ambisonic_order;
+//  std::string ambisonic_type;
+//  std::string ambisonic_channel_ordering;
+//  std::string ambisonic_normalization;
+//  uint32_t channel_map[4];
+//} static g_DefAudioMetadata;
+static AudioMetadata g_DefAudioMetadata;
 
 class Box;
 class Mpeg4Container;
@@ -122,9 +124,9 @@ class Utils
 
     Box *spherical_uuid ( std::string & );
     bool mpeg4_add_spherical      ( Mpeg4Container *, std::fstream &, std::string & );
-    bool mpeg4_add_spatial_audio  ( Mpeg4Container *, SPATIAL_AUDIO_DEFAULT_METADATA * );
-    bool mpeg4_add_audio_metadata ( Mpeg4Container *, std::fstream &, SPATIAL_AUDIO_DEFAULT_METADATA * );
-    bool inject_spatial_audio_atom( std::fstream &, Box *, SPATIAL_AUDIO_DEFAULT_METADATA * );
+    bool mpeg4_add_spatial_audio  ( Mpeg4Container *, std::fstream &, AudioMetadata * );
+    bool mpeg4_add_audio_metadata ( Mpeg4Container *, std::fstream &, AudioMetadata * );
+    bool inject_spatial_audio_atom( std::fstream &, Box *, AudioMetadata * );
     void parse_spherical_xml ( Box * ); // return sphericalDictionary
     void parse_spherical_mpeg4 ( Mpeg4Container *,std::fstream & ); // return metadata
     void parse_mpeg4     ( std::string & );

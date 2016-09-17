@@ -16,8 +16,11 @@
  * 
  ****************************************************************************/
 
+#include <iostream>
+
 #include "mpeg/constants.h"
 #include "mpeg/mpeg4_container.h"
+#include "mpeg/sa3d.h"
 
 #include "metadata_utils.h"
 
@@ -169,93 +172,114 @@ bool Utils::mpeg4_add_spherical ( Mpeg4Container *pMPEG4, std::fstream &inFile, 
   return true;
 }
 
-bool Utils::mpeg4_add_spatial_audio ( Mpeg4Container *, SPATIAL_AUDIO_DEFAULT_METADATA * )
+bool Utils::mpeg4_add_spatial_audio ( Mpeg4Container *pMPEG4, std::fstream &inFile, AudioMetadata *pAudio )
 {
-/*
-def mpeg4_add_spatial_audio(mpeg4_file, in_fh, audio_metadata, console):
-    """Adds spatial audio metadata to the first audio track of the input
-       mpeg4_file. Returns False on failure.
+  // pMPEG4 is Mpeg4 file structure to add metadata.
+  // inFile: file handle, Source for uncached file contents.
+  // pAudio: dictionary ('ambisonic_type': string, 'ambisonic_order': int),
+  //                      Supports 'periphonic' ambisonic type only.
+  if ( ! pMPEG4 )
+    return false;
 
-    Args:
-      mpeg4_file: mpeg4, Mpeg4 file structure to add metadata.
-      in_fh: file handle, Source for uncached file contents.
-      audio_metadata: dictionary ('ambisonic_type': string,
-      'ambisonic_order': int),
-      Supports 'periphonic' ambisonic type only.
-    """
-    for element in mpeg4_file.moov_box.contents:
-        if element.name == mpeg.constants.TAG_TRAK:
-            for sub_element in element.contents:
-                if sub_element.name != mpeg.constants.TAG_MDIA:
-                    continue
-                for mdia_sub_element in sub_element.contents:
-                    if mdia_sub_element.name != mpeg.constants.TAG_HDLR:
-                        continue
-                    position = mdia_sub_element.content_start() + 8
-                    in_fh.seek(position)
-                    if in_fh.read(4) == mpeg.constants.TAG_SOUN:
-                        return inject_spatial_audio_atom(
-                            in_fh, sub_element, audio_metadata, console)
-    return True
-*/
+  Container *pMoov = (Container *)pMPEG4->m_pMoovBox;
+  if ( ! pMoov )
+    return false;
+
+  std::vector<Box *>::iterator it = pMoov->m_listContents.begin ( );
+  while ( it != pMoov->m_listContents.end ( ) )  {
+    Container *pBox = (Container *)*it++;
+    if ( memcmp ( pBox->m_name, constants::TAG_TRAK, 4 ) != 0 )
+      continue;
+    
+    std::vector<Box *>::iterator it2 = pBox->m_listContents.begin ( );
+    while ( it2 != pBox->m_listContents.end ( ) )  {
+      Container *pSub = (Container *)*it2++;
+      if ( memcmp ( pSub->m_name, constants::TAG_MDIA, 4 ) != 0 )
+        continue;
+
+      std::vector<Box *>::iterator it3 = pSub->m_listContents.begin ( );
+      while ( it3 != pSub->m_listContents.end ( ) )  {
+        Box *pMDIA = *it3++;
+        if  ( memcmp ( pMDIA->m_name, constants::TAG_HDLR, 4 ) != 0 )
+          continue;
+
+        char name[4];
+        int iPos = pMDIA->content_start ( ) + 8;
+        inFile.seekg( iPos );
+        inFile.read ( name, 4 );
+        if ( memcmp ( name, constants::TAG_SOUN, 4 ) == 0 )
+          return inject_spatial_audio_atom ( inFile, pSub, pAudio ); 
+      }
+    }
+  }
+  return true;
+}
+
+bool Utils::mpeg4_add_audio_metadata ( Mpeg4Container *pMPEG4, std::fstream &inFile, AudioMetadata *pAudio )
+{
+  int num_audio_tracks = get_num_audio_tracks ( pMPEG4, inFile );
+  if ( num_audio_tracks > 1 )  {
+    std::cerr << "Error: Expected 1 audio track. Found " << num_audio_tracks << std::endl;
+    return false;
+  }
+  return mpeg4_add_spatial_audio ( pMPEG4, inFile, pAudio );
+}
+
+bool inArray ( char *pName, const char **ppArray, int iSize )  {
+  
+
   return false;
 }
 
-bool Utils::mpeg4_add_audio_metadata ( Mpeg4Container *, std::fstream &, SPATIAL_AUDIO_DEFAULT_METADATA * )
+bool Utils::inject_spatial_audio_atom( std::fstream &inFile, Box *pAudioMediaAtom, AudioMetadata *pAudio )
 {
-/*
-def mpeg4_add_audio_metadata(mpeg4_file, in_fh, audio_metadata, console):
-    num_audio_tracks = get_num_audio_tracks(mpeg4_file, in_fh)
-    if num_audio_tracks > 1:
-        console("Error: Expected 1 audio track. Found %d" % num_audio_tracks)
-        return False
+  if ( ! pAudioMediaAtom || ! pAudio )
+    return false;
+  
+  int iArraySize = sizeof ( constants::SOUND_SAMPLE_DESCRIPTIONS );
+  Container *pMediaAtom = (Container *)pAudioMediaAtom;
+  
+  std::vector<Box *>::iterator it = pMediaAtom->m_listContents.begin ( );
+  while ( it != pMediaAtom->m_listContents.end ( ) )  {
+    Container *pAtom = (Container *)*it++;
+    if ( memcmp ( pAtom->m_name, constants::TAG_MINF, 4 ) != 0 )
+      continue;
+    
+    std::vector<Box *>::iterator it2 = pAtom->m_listContents.begin ( );
+    while ( it2 != pAtom->m_listContents.end ( ) )  {
+      Container *pElement = (Container *)*it2++;
+      if ( memcmp ( pElement->m_name, constants::TAG_STBL, 4 ) != 0 )
+        continue;
+      
+      std::vector<Box *>::iterator it3 = pElement->m_listContents.begin ( );
+      while ( it3 != pElement->m_listContents.end ( ) )  {
+        Container *pSub = (Container *)*it3++;
+        if  ( memcmp ( pSub->m_name, constants::TAG_STSD, 4 ) != 0 )
+          continue;
 
-    return mpeg4_add_spatial_audio(mpeg4_file, in_fh, audio_metadata, console)
-*/
-  return false;
-}
-
-bool Utils::inject_spatial_audio_atom( std::fstream &, Box *, SPATIAL_AUDIO_DEFAULT_METADATA * )
-{
-/*
-def inject_spatial_audio_atom(
-    in_fh, audio_media_atom, audio_metadata, console):
-    for atom in audio_media_atom.contents:
-        if atom.name != mpeg.constants.TAG_MINF:
-            continue
-        for element in atom.contents:
-            if element.name != mpeg.constants.TAG_STBL:
-                continue
-            for sub_element in element.contents:
-                if sub_element.name != mpeg.constants.TAG_STSD:
-                    continue
-                for sample_description in sub_element.contents:
-                    if sample_description.name in\
-                            mpeg.constants.SOUND_SAMPLE_DESCRIPTIONS:
-                        in_fh.seek(sample_description.position +
-                                   sample_description.header_size + 16)
-                        num_channels = get_num_audio_channels(
-                            sub_element, in_fh)
-                        num_ambisonic_components = \
-                            get_expected_num_audio_components(
-                                audio_metadata["ambisonic_type"],
-                                audio_metadata["ambisonic_order"])
-                        if num_channels != num_ambisonic_components:
-                            err_msg = "Error: Found %d audio channel(s). "\
-                                  "Expected %d channel(s) for %s ambisonics "\
-                                  "of order %d."\
-                                % (num_channels,
-                                   num_ambisonic_components,
-                                   audio_metadata["ambisonic_type"],
-                                   audio_metadata["ambisonic_order"])
-                            console(err_msg)
-                            return False
-                        sa3d_atom = mpeg.SA3DBox.create(
-                            num_channels, audio_metadata)
-                        sample_description.contents.append(sa3d_atom)
-    return True
-*/
-  return false;
+        std::vector<Box *>::iterator it4 = pSub->m_listContents.begin ( );
+        while ( it4 != pSub->m_listContents.end ( ) )  {
+          Container *pSample = (Container *)*it4++;
+          if  (  inArray ( pSample->m_name, constants::SOUND_SAMPLE_DESCRIPTIONS, iArraySize ) )  {
+            inFile.seekg ( pSample->m_iPosition + pSample->m_iHeaderSize + 16 );
+            std::string strAmbisonicType= pAudio->ambisonic_type;
+            uint32_t iAmbisonicOrder    = pAudio->ambisonic_order;
+            int iNumChannels = get_num_audio_channels ( pSub, inFile );
+            int iNumAmbisonicComponents = get_expected_num_audio_components ( strAmbisonicType, iAmbisonicOrder );
+            if ( iNumChannels != iNumAmbisonicComponents )  {
+              std::cerr << "Error: Found " << iNumChannels << " audio channel(s). ";
+              std::cerr << "Expected " << iNumAmbisonicComponents << " chanel(s) for ";
+              std::cerr << strAmbisonicType << " ambisonics of order " << iAmbisonicOrder << "." << std::endl;
+              return false;
+            }
+            Box *pSA3DAtom =  SA3DBox::create ( iNumChannels, *pAudio );
+            pSample->m_listContents.push_back ( pSA3DAtom );
+          }
+        }
+      }
+    }
+  }
+  return true;
 }
 
 void Utils::parse_spherical_xml ( Box * ) // return sphericalDictionary

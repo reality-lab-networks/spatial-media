@@ -17,8 +17,25 @@
  * 
  ****************************************************************************/
 
-// MPEG-4 constants
+#include <stdint.h>
 
+struct AudioMetadata {
+  AudioMetadata ( )  {
+    ambisonic_order = 1;
+    ambisonic_type  = "periphonic";
+    ambisonic_channel_ordering = "ACN";
+    ambisonic_normalization    = "SN3D";
+    for ( uint32_t t=0; t<4; t++ )
+      channel_map[t] = t;
+  };
+  uint32_t ambisonic_order;
+  std::string ambisonic_type;
+  std::string ambisonic_channel_ordering;
+  std::string ambisonic_normalization;
+  uint32_t channel_map[4];
+};
+
+// MPEG-4 constants
 namespace constants
 {
 

@@ -94,7 +94,7 @@ Box *SA3DBox::load ( std::fstream &fs, uint32_t iPos, uint32_t iEnd )
   return pNewBox;
 }
 
-Box *SA3DBox::create ( int iNumChannels, AudioMetadata &amData )
+Box *SA3DBox::create ( int32_t iNumChannels, AudioMetadata &amData )
 {
   // audio_metadata: dictionary ('ambisonic_type': string, 'ambisonic_order': int),
 
