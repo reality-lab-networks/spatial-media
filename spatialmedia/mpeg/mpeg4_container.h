@@ -31,7 +31,7 @@ class Mpeg4Container : public Container
     Mpeg4Container ( );
     virtual ~Mpeg4Container ( );
 
-    static Box *load ( std::fstream &, uint32_t iPos, uint32_t iEnd );
+    static Mpeg4Container *load ( std::fstream & ); //, uint32_t iPos, uint32_t iEnd );
 
     void merge ( Box * );
     virtual void print_structure ( const char *p="" );

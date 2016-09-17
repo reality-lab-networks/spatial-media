@@ -37,7 +37,7 @@ Mpeg4Container::~Mpeg4Container ( )
 
 }
 
-Box *Mpeg4Container::load ( std::fstream &fsIn, uint32_t /* iPos */, uint32_t /* iEnd */ )
+Mpeg4Container *Mpeg4Container::load ( std::fstream &fsIn ) //, uint32_t /* iPos */, uint32_t /* iEnd */ )
 {
   // Load the mpeg4 file structure of a file.
 //  fsIn.seekg ( 0, 2 );

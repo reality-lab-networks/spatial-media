@@ -54,6 +54,12 @@ Metadata::~Metadata ( )
 
 }
 
+void Metadata::setVideoXML ( std::string &str, mxml_node_t *pNode )
+{
+//  m_strVideoXML = str;
+  m_mapVideo[str] = pNode;
+}
+
 void Metadata::setVideoXML ( std::string &str )
 {
   m_strVideoXML = str;
@@ -282,7 +288,7 @@ bool Utils::inject_spatial_audio_atom( std::fstream &inFile, Box *pAudioMediaAto
   return true;
 }
 
-void Utils::parse_spherical_xml ( Box * ) // return sphericalDictionary
+std::map<std::string, std::string> Utils::parse_spherical_xml ( uint8_t * ) // return sphericalDictionary
 {
 /*
 def parse_spherical_xml(contents, console):
@@ -326,82 +332,137 @@ def parse_spherical_xml(contents, console):
 */
 }
 
-void Utils::parse_spherical_mpeg4 ( Mpeg4Container *,std::fstream & ) // return metadata
+Metadata *Utils::parse_spherical_mpeg4 ( Mpeg4Container *pMPEG4, std::fstream &file ) // return metadata
 {
-/*
-def parse_spherical_mpeg4(mpeg4_file, fh, console):
-    """Returns spherical metadata for a loaded mpeg4 file.
+  // pMPEG4 is Mpeg4 file structure to add metadata.
+  // file: handle, Source for uncached file contents.
+  if ( ! pMPEG4 )
+    return NULL;
 
-    Args:
-      mpeg4_file: mpeg4, loaded mpeg4 file contents.
-      fh: file handle, file handle for uncached file contents.
+  int iTrackNum = 0;
+  int iArraySize = sizeof ( constants::SOUND_SAMPLE_DESCRIPTIONS );
+  uint8_t  buffer[16];
+  char    *pNewedBuffer  = NULL;
+  uint8_t *pSubElementID = NULL; // pointing to array of bytes
+  uint8_t *pContents     = NULL;
 
-    Returns:
-      Dictionary stored as (trackName, metadataDictionary)
-    """
-    metadata = ParsedMetadata()
-    track_num = 0
-    for element in mpeg4_file.moov_box.contents:
-        if element.name == mpeg.constants.TAG_TRAK:
-            trackName = "Track %d" % track_num
-            console("\t%s" % trackName)
-            track_num += 1
-            for sub_element in element.contents:
-                if sub_element.name == mpeg.constants.TAG_UUID:
-                    if sub_element.contents:
-                        sub_element_id = sub_element.contents[:16]
-                    else:
-                        fh.seek(sub_element.content_start())
-                        sub_element_id = fh.read(16)
 
-                    if sub_element_id == SPHERICAL_UUID_ID:
-                        if sub_element.contents:
-                            contents = sub_element.contents[16:]
-                        else:
-                            contents = fh.read(sub_element.content_size - 16)
-                        metadata.video[trackName] = \
-                            parse_spherical_xml(contents, console)
+  Container *pMoov = (Container *)pMPEG4->m_pMoovBox;
+  if ( ! pMoov )
+    return NULL;
 
-            if sub_element.name == mpeg.constants.TAG_MDIA:
-                for mdia_sub_element in sub_element.contents:
-                    if mdia_sub_element.name != mpeg.constants.TAG_MINF:
-                        continue
-                    for stbl_elem in mdia_sub_element.contents:
-                        if stbl_elem.name != mpeg.constants.TAG_STBL:
-                            continue
-                        for stsd_elem in stbl_elem.contents:
-                            if stsd_elem.name != mpeg.constants.TAG_STSD:
-                                continue
-                            for sa3d_container_elem in stsd_elem.contents:
-                                if sa3d_container_elem.name not in \
-                                        mpeg.constants.SOUND_SAMPLE_DESCRIPTIONS:
-                                    continue
-                                metadata.num_audio_channels = \
-                                    get_num_audio_channels(stsd_elem, fh)
-                                for sa3d_elem in sa3d_container_elem.contents:
-                                    if sa3d_elem.name == mpeg.constants.TAG_SA3D:
-                                        sa3d_elem.print_box(console)
-                                        metadata.audio = sa3d_elem
-    return metadata
-*/
+  ParsedMetadata *pMetadata = new ParsedMetadata;
+  std::vector<Box *>::iterator it = pMoov->m_listContents.begin ( );
+  while ( it != pMoov->m_listContents.end ( ) )  {
+    Container *pBox = (Container *)*it++;
+    if ( memcmp ( pBox->m_name, constants::TAG_TRAK, 4 ) != 0 )
+      continue;
+
+    std::string trackName = "Track " + iTrackNum++;
+    std::vector<Box *>::iterator it2 = pBox->m_listContents.begin ( );
+    while ( it2 != pBox->m_listContents.end ( ) )  {
+      Container *pSub = (Container *)*it2++;
+      if ( memcmp ( pSub->m_name, constants::TAG_UUID, 4 ) == 0 )  {
+        if ( pSub->m_pContents )
+          pSubElementID = pSub->m_pContents;
+        else  {
+          file.seekg ( pSub->content_start ( ) );
+          file.read  ( (char *)buffer, 16 );
+          pSubElementID = buffer;
+        }
+        if ( memcmp ( pSubElementID, SPHERICAL_UUID_ID, 16 ) == 0 )  {
+          if ( pSub->m_pContents )
+            pContents = &pSub->m_pContents[16];
+          else {
+            // fh.read(sub_element.content_size - 16)
+            pNewedBuffer =  new  char[pSub->m_iContentSize - 16];
+            file.read ( pNewedBuffer, pSub->m_iContentSize - 16);
+            pContents = (uint8_t *)pNewedBuffer;
+          }
+          // metadata.video[trackName] = parse_spherical_xml(contents, console)
+          std::map<std::string, std::string> map = parse_spherical_xml ( pContents ); 
+// TODO: Figure out what type metadata.video should actually be
+//       main.cpp :: md.setVideoXML ( strVideoXML );
+//          pMetadata->setVideoXML ( trackName, map );
+        }
+      }
+
+      // Note: I am not sure if the Python script has a bug here wrt sub_element vs element
+      //       The indentation is off !
+      // for element in mpeg4_file.moov_box.contents:
+      //   if element.name == mpeg.constants.TAG_TRAK:
+      //     for sub_element in element.contents:
+      //       if sub_element.name == mpeg.constants.TAG_UUID:
+      //         ...
+      //     if sub_element.name == mpeg.constants.TAG_MDIA:
+      //       ...
+      if ( memcmp ( pSub->m_name, constants::TAG_MDIA, 4 ) == 0 )  {
+        std::vector<Box *>::iterator it3 = pSub->m_listContents.begin ( );
+        while ( it3 != pSub->m_listContents.end ( ) )  {
+          Container *pMDIA = (Container *)*it3++;
+          if ( memcmp ( pMDIA->m_name, constants::TAG_MINF, 4 ) != 0 )
+            continue;
+
+          std::vector<Box *>::iterator it4 = pMDIA->m_listContents.begin ( );
+          while ( it4 != pMDIA->m_listContents.end ( ) )  {
+            Container *pSTBL = (Container *)*it4++;
+            if ( memcmp ( pSTBL->m_name, constants::TAG_STBL, 4 ) != 0 )  
+              continue;
+
+            std::vector<Box *>::iterator it5 = pSTBL->m_listContents.begin ( );
+            while ( it5 != pSTBL->m_listContents.end ( ) )  {
+              Container *pSTSD = (Container *)*it5++;
+              if ( memcmp ( pSTSD->m_name, constants::TAG_STSD, 4 ) != 0 )
+                continue;
+
+              std::vector<Box *>::iterator it6 = pSTSD->m_listContents.begin ( );
+              while ( it6 != pSTSD->m_listContents.end ( ) )  {
+                Container *pSA3D = (Container *)*it6++;
+                if ( memcmp ( pSA3D->m_name, constants::TAG_STSD, 4 ) != 0 )
+                  continue;
+                            
+                if ( ! inArray ( pSA3D->m_name, constants::SOUND_SAMPLE_DESCRIPTIONS, iArraySize ) )
+                  continue;
+
+                pMetadata->m_iNumAudioChannels = get_num_audio_channels ( pSTSD, file );
+                std::vector<Box *>::iterator it7 = pSA3D->m_listContents.begin ( );
+                while ( it7 != pSA3D->m_listContents.end ( ) )  {
+                  Container *pItem = (Container *)*it7++;
+                  if ( memcmp ( pItem->m_name, constants::TAG_SA3D, 4 ) == 0 )  {
+                    SA3DBox *pSA = (SA3DBox *)pItem;
+                    pSA->print_box ( );
+// TODO: Figure out waht type metadata.audio should be ( main.cpp has a different type than SA3DBox )
+//       main.cpp :: md.setAudio ( (void *)&g_DefAudioMetadata );
+                    pMetadata->setAudio ( pSA );
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  if ( pNewedBuffer )
+    delete []pNewedBuffer;
+
+  return pMetadata;
 }
 
-void Utils::parse_mpeg4 ( std::string & )
+void Utils::parse_mpeg4 ( std::string &strFileName )
 {
-/*
-def parse_mpeg4(input_file, console):
-    with open(input_file, "rb") as in_fh:
-        mpeg4_file = mpeg.load(in_fh)
-        if mpeg4_file is None:
-            console("Error, file could not be opened.")
-            return
-
-        console("Loaded file...")
-        return parse_spherical_mpeg4(mpeg4_file, in_fh, console)
-
-    console("Error \"" + input_file + "\" does not exist or do not have "
-            "permission.")
-*/
+  std::fstream file ( strFileName.c_str ( ), std::ios::in | std::ios::binary );
+  if ( ! file.is_open ( ) )  {
+    std::cerr << "Error \"" << strFileName << "\" does not exist or do not have permission." << std::endl;
+    return;
+  }
+  Mpeg4Container *pMPEG4 = Mpeg4Container::load ( file );
+  if ( ! pMPEG4 )  {
+    std::cerr << "Error, file could not be opened." << std::endl;
+    return;
+  }
+  std::cout << "File loaded." << std::endl;
+  parse_spherical_mpeg4 ( pMPEG4, file );
 }
 
 void Utils::inject_mpeg4 ( std::string &, std::string &, Box * )

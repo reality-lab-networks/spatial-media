@@ -86,6 +86,7 @@ static std::string SPHERICAL_PREFIX = "{http://ns.google.com/videos/1.0/spherica
 static AudioMetadata g_DefAudioMetadata;
 
 class Box;
+class SA3DBox;
 class Mpeg4Container;
 
 class Metadata
@@ -94,6 +95,7 @@ class Metadata
     Metadata ( );
     virtual ~Metadata ( );
 
+    void setVideoXML ( std::string &, mxml_node_t * );
     void setVideoXML ( std::string & );
     void setAudio ( void * );
 
@@ -111,7 +113,7 @@ class ParsedMetadata : public Metadata
     virtual ~ParsedMetadata ( );
 
 
-  private:
+//  private:
     uint32_t m_iNumAudioChannels;
 };
 
@@ -127,8 +129,8 @@ class Utils
     bool mpeg4_add_spatial_audio  ( Mpeg4Container *, std::fstream &, AudioMetadata * );
     bool mpeg4_add_audio_metadata ( Mpeg4Container *, std::fstream &, AudioMetadata * );
     bool inject_spatial_audio_atom( std::fstream &, Box *, AudioMetadata * );
-    void parse_spherical_xml ( Box * ); // return sphericalDictionary
-    void parse_spherical_mpeg4 ( Mpeg4Container *,std::fstream & ); // return metadata
+    std::map<std::string, std::string> parse_spherical_xml ( uint8_t * ); // return sphericalDictionary
+    Metadata *parse_spherical_mpeg4 ( Mpeg4Container *,std::fstream & ); // return metadata
     void parse_mpeg4     ( std::string & );
     void inject_mpeg4    ( std::string &, std::string &, Box * );
     void parse_metadata  ( std::string & );
