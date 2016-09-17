@@ -17,7 +17,7 @@
  ****************************************************************************/
 
 #include "mpeg/constants.h"
-#include "mpeg/box.h"
+#include "mpeg/mpeg4_container.h"
 
 #include "metadata_utils.h"
 
@@ -114,41 +114,59 @@ Box *Utils::spherical_uuid ( std::string &strMetadata )
   return p;
 }
 
-bool Utils::mpeg4_add_spherical ( Mpeg4Container *, std::string & )
+bool Utils::mpeg4_add_spherical ( Mpeg4Container *pMPEG4, std::fstream &inFile, std::string &strMetadata )
 {
   // Adds a spherical uuid box to an mpeg4 file for all video tracks.
-/*
-  def mpeg4_add_spherical(mpeg4_file, in_fh, metadata):
-    Args:
-      mpeg4_file: mpeg4, Mpeg4 file structure to add metadata.
-      in_fh: file handle, Source for uncached file contents.
-      metadata: string, xml metadata to inject into spherical tag.
-    """
-    for element in mpeg4_file.moov_box.contents:
-        if element.name == mpeg.constants.TAG_TRAK:
-            added = False
-            element.remove(mpeg.constants.TAG_UUID)
-            for sub_element in element.contents:
-                if sub_element.name != mpeg.constants.TAG_MDIA:
-                    continue
-                for mdia_sub_element in sub_element.contents:
-                    if mdia_sub_element.name != mpeg.constants.TAG_HDLR:
-                        continue
-                    position = mdia_sub_element.content_start() + 8
-                    in_fh.seek(position)
-                    if in_fh.read(4) == mpeg.constants.TRAK_TYPE_VIDE:
-                        added = True
-                        break
+  //
+  // pMPEG4 : Mpeg4 file structure to add metadata.
+  // inFile : file handle, Source for uncached file contents.
+  // strMetadata: string, xml metadata to inject into spherical tag.
+  if ( ! pMPEG4 )
+    return false;
 
-                if added:
-                    if not element.add(spherical_uuid(metadata)):
-                        return False
-                    break
+  bool bAdded = false;
+  Container *pMoov = (Container *)pMPEG4->m_pMoovBox;
+  if ( ! pMoov )
+    return false;
 
-    mpeg4_file.resize()
-    return True
-*/
-  return false;
+  std::vector<Box *>::iterator it = pMoov->m_listContents.begin ( );
+  while ( it != pMoov->m_listContents.end ( ) )  {
+    Container *pBox = (Container *)*it++;
+    if ( memcmp ( pBox->m_name, constants::TAG_TRAK, 4 ) == 0 )  {
+      bAdded = false;
+      pBox->remove ( constants::TAG_UUID );
+
+      std::vector<Box *>::iterator it2 = pBox->m_listContents.begin ( );
+      while ( it2 != pBox->m_listContents.end ( ) )  {
+        Container *pSub = (Container *)*it2++;
+        if ( memcmp ( pSub->m_name, constants::TAG_MDIA, 4 ) != 0 )
+          continue;
+
+        std::vector<Box *>::iterator it3 = pSub->m_listContents.begin ( );
+        while ( it3 != pSub->m_listContents.end ( ) )  {
+          Box *pMDIA = *it3++;
+          if  ( memcmp ( pMDIA->m_name, constants::TAG_HDLR, 4 ) != 0 )
+            continue;
+
+          char name[4];
+          int iPos = pMDIA->content_start ( ) + 8;
+          inFile.seekg( iPos );
+          inFile.read ( name, 4 );
+          if ( memcmp ( name, constants::TRAK_TYPE_VIDE, 4 ) == 0 )  {
+            bAdded = true;
+            break;
+          }
+        }        
+        if ( bAdded )  {
+          if ( ! pBox->add ( spherical_uuid ( strMetadata ) ) )
+            return true;
+          break;
+        }
+      }
+    }
+  }
+  pMPEG4->resize ( );
+  return true;
 }
 
 bool Utils::mpeg4_add_spatial_audio ( Mpeg4Container *, SPATIAL_AUDIO_DEFAULT_METADATA * )

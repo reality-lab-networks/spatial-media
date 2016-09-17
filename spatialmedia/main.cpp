@@ -29,7 +29,7 @@ int main ( int argc, char *argv[] )
   SpatialMedia::Parser parser;
   parser.parseCommandLine ( argc, argv );
   if ( parser.getInFile ( ) == "" )  {
-    cout << "Please [provide an input file." << endl;
+    cout << "Please provide an input file." << endl;
     exit ( -1 );
   }
 

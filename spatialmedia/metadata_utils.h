@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <fstream>
 #include <map>
 
 #include "mxml.h"
@@ -120,7 +121,7 @@ class Utils
     virtual ~Utils ( );
 
     Box *spherical_uuid ( std::string & );
-    bool mpeg4_add_spherical      ( Mpeg4Container *, std::string & );
+    bool mpeg4_add_spherical      ( Mpeg4Container *, std::fstream &, std::string & );
     bool mpeg4_add_spatial_audio  ( Mpeg4Container *, SPATIAL_AUDIO_DEFAULT_METADATA * );
     bool mpeg4_add_audio_metadata ( Mpeg4Container *, std::fstream &, SPATIAL_AUDIO_DEFAULT_METADATA * );
     bool inject_spatial_audio_atom( std::fstream &, Box *, SPATIAL_AUDIO_DEFAULT_METADATA * );
