@@ -97,12 +97,15 @@ class Metadata
 
     void setVideoXML ( std::string &, mxml_node_t * );
     void setVideoXML ( std::string & );
-    void setAudio ( void * );
+    void setAudio ( AudioMetadata * );
+
+    std::string &getVideoXML ( );
+    AudioMetadata  *getAudio ( );
 
   private:
     std::string m_strVideoXML;
     std::map<std::string, mxml_node_t *> m_mapVideo;
-    void *m_pAudio;
+    AudioMetadata *m_pAudio;
 };
 
 
@@ -132,12 +135,12 @@ class Utils
     std::map<std::string, std::string> parse_spherical_xml ( uint8_t * ); // return sphericalDictionary
     Metadata *parse_spherical_mpeg4 ( Mpeg4Container *,std::fstream & ); // return metadata
     void parse_mpeg4     ( std::string & );
-    void inject_mpeg4    ( std::string &, std::string &, Box * );
+    void inject_mpeg4    ( std::string &, std::string &, Metadata * );
     void parse_metadata  ( std::string & );
     void inject_metadata ( std::string &, std::string &, Metadata * );
     std::string &generate_spherical_xml ( SpatialMedia::Parser::enMode, int * );
-    void get_descriptor_length  ( std::fstream & );
-    int32_t  get_expected_num_audio_components ( std::string &, uint32_t );
+    uint8_t get_descriptor_length  ( std::fstream & );
+    int32_t get_expected_num_audio_components ( std::string &, uint32_t );
     int32_t  get_num_audio_channels ( Box *, std::fstream & );
     uint32_t get_sample_description_num_channels ( Box *, std::fstream & ); 
     int32_t  get_aac_num_channels ( Box *, std::fstream & );

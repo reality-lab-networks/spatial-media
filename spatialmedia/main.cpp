@@ -43,7 +43,7 @@ int main ( int argc, char *argv[] )
     std::string &strVideoXML = utils.generate_spherical_xml ( parser.getStereoMode ( ), parser.getCrop ( ) );
     md.setVideoXML ( strVideoXML );
     if ( parser.getSpatialAudio ( ) )
-      md.setAudio ( (void *)&g_DefAudioMetadata );
+      md.setAudio ( &g_DefAudioMetadata );
     if ( strVideoXML.length ( ) > 1 )
       utils.inject_metadata ( parser.getInFile ( ), parser.getOutFile ( ), &md );
     else

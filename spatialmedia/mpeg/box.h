@@ -43,7 +43,7 @@ class Box
     void stco_copy  ( std::fstream &, std::fstream &, Box *, int32_t );
     void co64_copy  ( std::fstream &, std::fstream &, Box *, int32_t );
 
-  protected:
+  public:
     static uint8_t  readUint8  ( std::fstream &fs );
     static uint32_t readUint32 ( std::fstream &fs );
     static uint64_t readUint64 ( std::fstream &fs );

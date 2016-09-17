@@ -65,9 +65,19 @@ void Metadata::setVideoXML ( std::string &str )
   m_strVideoXML = str;
 }
 
-void Metadata::setAudio ( void *pAudio )
+void Metadata::setAudio ( AudioMetadata *pAudio )
 {
   m_pAudio = pAudio;
+}
+
+std::string &Metadata::getVideoXML ( )
+{
+  return m_strVideoXML;
+}
+
+AudioMetadata *Metadata::getAudio ( )
+{
+  return m_pAudio;
 }
 
 ParsedMetadata::ParsedMetadata ( )
@@ -431,9 +441,9 @@ Metadata *Utils::parse_spherical_mpeg4 ( Mpeg4Container *pMPEG4, std::fstream &f
                   if ( memcmp ( pItem->m_name, constants::TAG_SA3D, 4 ) == 0 )  {
                     SA3DBox *pSA = (SA3DBox *)pItem;
                     pSA->print_box ( );
-// TODO: Figure out waht type metadata.audio should be ( main.cpp has a different type than SA3DBox )
+// TODO: Figure out what type metadata.audio should be ( main.cpp has a different type than SA3DBox )
 //       main.cpp :: md.setAudio ( (void *)&g_DefAudioMetadata );
-                    pMetadata->setAudio ( pSA );
+//                    pMetadata->setAudio ( pSA );
                   }
                 }
               }
@@ -465,88 +475,85 @@ void Utils::parse_mpeg4 ( std::string &strFileName )
   parse_spherical_mpeg4 ( pMPEG4, file );
 }
 
-void Utils::inject_mpeg4 ( std::string &, std::string &, Box * )
+void Utils::inject_mpeg4 ( std::string &strInFile, std::string &strOutFile, Metadata *pMetadata )
 {
-/*
-def inject_mpeg4(input_file, output_file, metadata, console):
-    with open(input_file, "rb") as in_fh:
-
-        mpeg4_file = mpeg.load(in_fh)
-        if mpeg4_file is None:
-            console("Error file could not be opened.")
-
-        if not mpeg4_add_spherical(mpeg4_file, in_fh, metadata.video):
-            console("Error failed to insert spherical data")
-
-        if metadata.audio:
-            if not mpeg4_add_audio_metadata(
-                mpeg4_file, in_fh, metadata.audio, console):
-                    console("Error failed to insert spatial audio data")
-
-        console("Saved file settings")
-        parse_spherical_mpeg4(mpeg4_file, in_fh, console)
-
-        with open(output_file, "wb") as out_fh:
-            mpeg4_file.save(in_fh, out_fh)
-        return
-
-    console("Error file: \"" + input_file + "\" does not exist or do not have "
-            "permission.")
-*/
+  std::fstream inFile ( strInFile.c_str ( ), std::ios::in | std::ios::binary );
+  if ( ! inFile.is_open ( ) ) {
+    std::cerr << "Error \"" << strInFile << "\" does not exist or do not have permission." << std::endl;
+    return;
+  }
+  Mpeg4Container *pMPEG4 = Mpeg4Container::load ( inFile );
+  if ( ! pMPEG4 )  {
+    std::cerr << "Error, file could not be opened." << std::endl;
+    return;
+  }
+  bool bRet = mpeg4_add_spherical ( pMPEG4, inFile, pMetadata->getVideoXML ( ) );
+  if ( ! bRet ) {
+    std::cerr << "Error failed to insert spherical data" << std::endl;
+  }
+  if ( pMetadata->getAudio ( ) )  {
+    bRet = mpeg4_add_audio_metadata ( pMPEG4, inFile, pMetadata->getAudio ( ) );
+    if ( ! bRet )  {
+      std::cerr << "Error failed to insert spatial audio data" << std::endl;
+    }
+  }
+  std::cout << "Saved file settings" << std::endl;
+  parse_spherical_mpeg4 ( pMPEG4, inFile );
+  
+  std::fstream outFile ( strOutFile.c_str ( ), std::ios::out | std::ios::binary );
+  if ( ! outFile.is_open ( ) )  {
+    std::cerr << "Error file: \"" << strOutFile << "\" could not create or do not have permission." << std::endl;
+    return;
+  }
+  pMPEG4->save ( inFile, outFile );
 }
 
-void Utils::parse_metadata ( std::string & )
+void Utils::parse_metadata ( std::string &strFile )
 {
-/*
-def parse_metadata(src, console):
-    infile = os.path.abspath(src)
+  std::fstream inFile ( strFile.c_str ( ), std::ios::in | std::ios::binary );
+  if ( ! inFile.is_open ( ) ) {
+    std::cerr << "Error \"" << strFile << "\" does not exist or do not have permission." << std::endl;
+    return;
+  }
+  inFile.close ( );
+  int iArraySize = sizeof ( MPEG_FILE_EXTENSIONS ) / sizeof ( MPEG_FILE_EXTENSIONS[1] );
+  std::string strExt;
+  std::string::size_type idx = strFile.rfind ( '.' );
+  if ( idx != std::string::npos )
+    strExt = strFile.substr ( idx + 1 );
 
-    try:
-        in_fh = open(infile, "rb")
-        in_fh.close()
-    except:
-        console("Error: " + infile +
-                " does not exist or we do not have permission")
-
-    console("Processing: " + infile)
-    extension = os.path.splitext(infile)[1].lower()
-
-    if extension in MPEG_FILE_EXTENSIONS:
-        return parse_mpeg4(infile, console)
-
-    console("Unknown file type")
-    return None
-*/
+  std::cout << "Processing: " << strFile << std::endl;
+  if ( ! inArray ( (char *)strExt.c_str ( ), MPEG_FILE_EXTENSIONS, iArraySize ) )  {
+    std::cerr << "Unknown file type" << std::endl;
+    return;
+  }
+  return parse_mpeg4 ( strFile );
 }
 
-void Utils::inject_metadata ( std::string &, std::string &, Metadata * )
+void Utils::inject_metadata ( std::string &strInFile, std::string &strOutFile, Metadata *pMetadata )
 {
-/*
-def inject_metadata(src, dest, metadata, console):
-    infile = os.path.abspath(src)
-    outfile = os.path.abspath(dest)
+  if ( strInFile == strOutFile )  {
+    std::cerr << "Input and output cannot be the same" << std::endl;
+    return;
+  }
+  std::fstream inFile ( strInFile.c_str ( ), std::ios::in | std::ios::binary );
+  if ( ! inFile.is_open ( ) ) {
+    std::cerr << "Error \"" << strInFile << "\" does not exist or do not have permission." << std::endl;
+    return;
+  }
+  inFile.close ( );
+  int iArraySize = sizeof ( MPEG_FILE_EXTENSIONS ) / sizeof ( MPEG_FILE_EXTENSIONS[1] );
+  std::string strExt;
+  std::string::size_type idx = strInFile.rfind ( '.' );
+  if ( idx != std::string::npos )
+    strExt = strInFile.substr ( idx + 1 );
 
-    if infile == outfile:
-        return "Input and output cannot be the same"
-
-    try:
-        in_fh = open(infile, "rb")
-        in_fh.close()
-    except:
-        console("Error: " + infile +
-                " does not exist or we do not have permission")
-        return
-
-    console("Processing: " + infile)
-
-    extension = os.path.splitext(infile)[1].lower()
-
-    if (extension in MPEG_FILE_EXTENSIONS):
-        inject_mpeg4(infile, outfile, metadata, console)
-        return
-
-    console("Unknown file type")
-*/
+  std::cout << "Processing: " << strInFile << std::endl;
+  if ( ! inArray ( (char *)strExt.c_str ( ), MPEG_FILE_EXTENSIONS, iArraySize ) )  {
+    std::cerr << "Unknown file type" << std::endl;
+    return;
+  }
+  return inject_mpeg4 ( strInFile, strOutFile, pMetadata );
 }
 
 std::string &Utils::generate_spherical_xml ( SpatialMedia::Parser::enMode, int * )
@@ -626,22 +633,21 @@ def generate_spherical_xml(stereo=None, crop=None):
   return m_strSphericalXML;
 }
 
-void Utils::get_descriptor_length ( std::fstream & )
+uint8_t Utils::get_descriptor_length ( std::fstream &inFile )
 {
-/*
-def get_descriptor_length(in_fh):
-    """Derives the length of the MP4 elementary stream descriptor at the
-       current position in the input file.
-    """
-    descriptor_length = 0
-    for i in range(4):
-        size_byte = struct.unpack(">c", in_fh.read(1))[0]
-        descriptor_length = (descriptor_length << 7 |
-                             ord(size_byte) & int("0x7f", 0))
-        if (ord(size_byte) != int("0x80", 0)):
-            break
-    return descriptor_length
-*/
+  // Derives the length of the MP4 elementary stream descriptor at the
+  // current position in the input file.
+  int t;
+  uint8_t iVal = 0;
+  uint8_t descriptor_length = 0;
+  for ( t=0;t<4; t++ )  {
+    iVal = Box::readUint8 ( inFile );
+    // Python :: descriptor_length = (descriptor_length << 7 | ord(size_byte) & int("0x7f", 0))
+    descriptor_length = ( descriptor_length << 7 ) | ( iVal & 0x7F );
+    if ( iVal != 0x80 )
+      break;
+  }
+  return descriptor_length;
 }
 
 int32_t Utils::get_expected_num_audio_components ( std::string &, uint32_t )
