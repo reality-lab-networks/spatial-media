@@ -56,14 +56,13 @@ static std::string SPHERICAL_XML_CONTENTS_TOP_BOTTOM = "<GSpherical:StereoMode>t
 static std::string SPHERICAL_XML_CONTENTS_LEFT_RIGHT = "<GSpherical:StereoMode>left-right</GSpherical:StereoMode>";
 
 // Parameter order matches that of the crop option.
-static std::string SPHERICAL_XML_CONTENTS_CROP_FORMAT = "<GSpherical:CroppedAreaImageWidthPixels>{0}"\
-    "</GSpherical:CroppedAreaImageWidthPixels>"\
-    "<GSpherical:CroppedAreaImageHeightPixels>{1}"\
-    "</GSpherical:CroppedAreaImageHeightPixels>"\
-    "<GSpherical:FullPanoWidthPixels>{2}</GSpherical:FullPanoWidthPixels>"\
-    "<GSpherical:FullPanoHeightPixels>{3}</GSpherical:FullPanoHeightPixels>"\
-    "<GSpherical:CroppedAreaLeftPixels>{4}</GSpherical:CroppedAreaLeftPixels>"\
-    "<GSpherical:CroppedAreaTopPixels>{5}</GSpherical:CroppedAreaTopPixels>";
+static std::string SPHERICAL_XML_CONTENTS_CROP_FORMAT = \
+    "<GSpherical:CroppedAreaImageWidthPixels>%d</GSpherical:CroppedAreaImageWidthPixels>"\
+    "<GSpherical:CroppedAreaImageHeightPixels>%d</GSpherical:CroppedAreaImageHeightPixels>"\
+    "<GSpherical:FullPanoWidthPixels>%d</GSpherical:FullPanoWidthPixels>"\
+    "<GSpherical:FullPanoHeightPixels>%d</GSpherical:FullPanoHeightPixels>"\
+    "<GSpherical:CroppedAreaLeftPixels>%d</GSpherical:CroppedAreaLeftPixels>"\
+    "<GSpherical:CroppedAreaTopPixels>%d</GSpherical:CroppedAreaTopPixels>";
 
 static std::string SPHERICAL_XML_FOOTER = "</rdf:SphericalVideo>";
 static std::string SPHERICAL_PREFIX = "{http://ns.google.com/videos/1.0/spherical/}";
@@ -149,6 +148,7 @@ class Utils
 
   private:
     std::string m_strSphericalXML;
+    std::map<std::string, std::string> m_mapSphericalDictionary;
 };
 
 #endif // __METADATA_UTILS_H__

@@ -298,18 +298,57 @@ bool Utils::inject_spatial_audio_atom( std::fstream &inFile, Box *pAudioMediaAto
   return true;
 }
 
-std::map<std::string, std::string> Utils::parse_spherical_xml ( uint8_t * ) // return sphericalDictionary
+std::map<std::string, std::string> Utils::parse_spherical_xml ( uint8_t *pContents ) // return sphericalDictionary
 {
+  // Returns  spherical metadata for a set of xml data.
+  // Args:    string, spherical metadata xml contents.
+  // Retruns: dictionary containing the parsed spherical metadata values.
+  char buffer[8192];
+  char *ptr = NULL;
+  std::string strContents;
+  mxml_node_t *parsed_xml = mxmlLoadString ( NULL, (char *)pContents, MXML_NO_CALLBACK );
+  if ( ! parsed_xml )  {
+    std::cerr << "\t\tParser Error on XML. " << (char *)pContents << std::endl;
+    return m_mapSphericalDictionary;
+  }
+  // mxmlSaveString(tree, buffer, sizeof(buffer), MXML_NO_CALLBACK);
+  // ptr = mxmlSaveAllocString(tree, MXML_NO_CALLBACK);
+  mxml_node_t *pNode = mxmlFindElement ( parsed_xml, parsed_xml, "rdf:SphericalVideo", "xmlns:rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#", MXML_DESCEND );
+  if ( ! pNode )  {
+    pNode = mxmlFindElement ( parsed_xml, parsed_xml, "rdf:SphericalVideo", NULL, NULL, MXML_DESCEND );
+    if ( ! pNode )  {
+      std::cerr << "\t\tError could not find tag : \"rdf:SphericalVideo\"" << std::endl;
+      return m_mapSphericalDictionary;
+    }
+    mxmlElementSetAttr ( pNode, "xmlns:rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#" );
+  }
+  /* Find the first "a" element with "href" to a URL */
+  //  node = mxmlFindElement(tree, tree, "a", "href", "http://www.minixml.org/", MXML_DESCEND);
+  int iArraySize = (int)( sizeof ( SPHERICAL_TAGS_LIST ) / sizeof ( SPHERICAL_TAGS_LIST[0] ) );
+  std::string strTag, strText;
+  mxml_node_t *pChild = mxmlGetFirstChild ( parsed_xml );
+  while ( pChild != NULL )  {
+    const char *pTag  = mxmlGetElement ( pChild ); 
+    const char *pText = mxmlGetText    ( pChild, NULL );
+    if ( pText != NULL && pTag != NULL )  {
+      if ( inArray ( (char *)strTag.c_str ( ), SPHERICAL_TAGS_LIST, iArraySize ) )  {
+        std::cout << "\t\t" << strTag << " = " << strText << std::endl;
+        m_mapSphericalDictionary[strTag] = strText;
+      }
+      else  {
+       std::cout << "\t\tUnknown: " << strTag<< " = " << strText << std::endl;
+       // tag = child.tag
+       //   if child.tag[:len(spherical_prefix)] == spherical_prefix:
+       //      tag = child.tag[len(spherical_prefix):]
+      }
+    }
+    pChild = mxmlGetNextSibling ( pChild );
+  }
+
+  return m_mapSphericalDictionary;
+}
 /*
 def parse_spherical_xml(contents, console):
-    """Returns spherical metadata for a set of xml data.
-
-    Args:
-      contents: string, spherical metadata xml contents.
-
-    Returns:
-      dictionary containing the parsed spherical metadata values.
-    """
     try:
         parsed_xml = xml.etree.ElementTree.XML(contents)
     except xml.etree.ElementTree.ParseError:
@@ -340,7 +379,6 @@ def parse_spherical_xml(contents, console):
 
     return sphericalDictionary
 */
-}
 
 Metadata *Utils::parse_spherical_mpeg4 ( Mpeg4Container *pMPEG4, std::fstream &file ) // return metadata
 {
@@ -556,80 +594,62 @@ void Utils::inject_metadata ( std::string &strInFile, std::string &strOutFile, M
   return inject_mpeg4 ( strInFile, strOutFile, pMetadata );
 }
 
-std::string &Utils::generate_spherical_xml ( SpatialMedia::Parser::enMode, int * )
+std::string &Utils::generate_spherical_xml ( SpatialMedia::Parser::enMode stereo, int *crop )
 {
-/*
-def generate_spherical_xml(stereo=None, crop=None):
-    # Configure inject xml.
-    additional_xml = ""
-    if stereo == "top-bottom":
-        additional_xml += SPHERICAL_XML_CONTENTS_TOP_BOTTOM
+  // Configure inject xml
+  static std::string empty;
+  std::string additional_xml;
+  if ( stereo == SpatialMedia::Parser::SM_TOP_BOTTOM )
+    additional_xml += SPHERICAL_XML_CONTENTS_TOP_BOTTOM;
+  if ( stereo == SpatialMedia::Parser::SM_LEFT_RIGHT )
+    additional_xml += SPHERICAL_XML_CONTENTS_LEFT_RIGHT;
 
-    if stereo == "left-right":
-        additional_xml += SPHERICAL_XML_CONTENTS_LEFT_RIGHT
-
-    if crop:
-        crop_match = re.match(crop_regex, crop)
-        if not crop_match:
-            print "Error: Invalid crop params: {crop}".format(crop=crop)
-            return False
-        else:
-            cropped_width_pixels = int(crop_match.group(1))
-            cropped_height_pixels = int(crop_match.group(2))
-            full_width_pixels = int(crop_match.group(3))
-            full_height_pixels = int(crop_match.group(4))
-            cropped_offset_left_pixels = int(crop_match.group(5))
-            cropped_offset_top_pixels = int(crop_match.group(6))
-
-            # This should never happen based on the crop regex.
-            if full_width_pixels <= 0 or full_height_pixels <= 0:
-                print "Error with crop params: full pano dimensions are "\
-                        "invalid: width = {width} height = {height}".format(
-                            width=full_width_pixels,
-                            height=full_height_pixels)
-                return False
-
-            if (cropped_width_pixels <= 0 or
-                    cropped_height_pixels <= 0 or
-                    cropped_width_pixels > full_width_pixels or
-                    cropped_height_pixels > full_height_pixels):
-                print "Error with crop params: cropped area dimensions are "\
-                        "invalid: width = {width} height = {height}".format(
-                            width=cropped_width_pixels,
-                            height=cropped_height_pixels)
-                return False
-
-            # We are pretty restrictive and don't allow anything strange. There
-            # could be use-cases for a horizontal offset that essentially
-            # translates the domain, but we don't support this (so that no
-            # extra work has to be done on the client).
-            total_width = cropped_offset_left_pixels + cropped_width_pixels
-            total_height = cropped_offset_top_pixels + cropped_height_pixels
-            if (cropped_offset_left_pixels < 0 or
-                    cropped_offset_top_pixels < 0 or
-                    total_width > full_width_pixels or
-                    total_height > full_height_pixels):
-                    print "Error with crop params: cropped area offsets are "\
-                            "invalid: left = {left} top = {top} "\
-                            "left+cropped width: {total_width} "\
-                            "top+cropped height: {total_height}".format(
-                                left=cropped_offset_left_pixels,
-                                top=cropped_offset_top_pixels,
-                                total_width=total_width,
-                                total_height=total_height)
-                    return False
-
-            additional_xml += SPHERICAL_XML_CONTENTS_CROP_FORMAT.format(
-                cropped_width_pixels, cropped_height_pixels,
-                full_width_pixels, full_height_pixels,
-                cropped_offset_left_pixels, cropped_offset_top_pixels)
-
-    spherical_xml = (SPHERICAL_XML_HEADER +
-                     SPHERICAL_XML_CONTENTS +
-                     additional_xml +
-                     SPHERICAL_XML_FOOTER)
-    return spherical_xml
-*/
+  if ( crop )  {
+    //  -c CROP, --crop CROP  crop region. Must specify 6 integers in the form of
+    //                        "w:h:f_w:f_h:x:y" where w=CroppedAreaImageWidthPixels
+    //                        h=CroppedAreaImageHeightPixels f_w=FullPanoWidthPixels
+    //                        f_h=FullPanoHeightPixels x=CroppedAreaLeftPixels
+    //                        y=CroppedAreaTopPixels
+    int cropped_width_pixels      = crop[0];
+    int cropped_height_pixels     = crop[1];
+    int full_width_pixels         = crop[2];
+    int full_height_pixels        = crop[3];
+    int cropped_offset_left_pixels= crop[4];
+    int cropped_offset_top_pixels = crop[5];
+    // This should never happen based on the crop regex.
+    if ( full_width_pixels <= 0 || full_height_pixels <= 0 )  {
+      std::cerr << "Error with crop params: full pano dimensions are ";
+      std::cerr << "invalid: width = " << full_width_pixels << " height = " << full_height_pixels;
+      return empty;
+    }
+    if ( cropped_width_pixels <= 0 || cropped_height_pixels <= 0 ||
+         cropped_width_pixels > full_width_pixels || cropped_height_pixels > full_height_pixels )  {
+      std::cerr << "Error with crop params: cropped area dimensions are ";
+      std::cerr << "invalid: width = " << cropped_width_pixels << " height = " << cropped_height_pixels;
+      return empty;
+    }
+    // We are pretty restrictive and don't allow anything strange. There
+    // could be use-cases for a horizontal offset that essentially
+    // translates the domain, but we don't support this (so that no
+    // extra work has to be done on the client).
+    int total_width  = cropped_offset_left_pixels + cropped_width_pixels;
+    int total_height = cropped_offset_top_pixels + cropped_height_pixels;
+    if ( cropped_offset_left_pixels  < 0 || cropped_offset_top_pixels < 0 ||
+         total_width > full_width_pixels || total_height > full_height_pixels )  {
+      std::cerr << "Error with crop params: cropped area offsets are ";
+      std::cerr << "invalid: left = " << cropped_offset_left_pixels << " top = " << cropped_offset_top_pixels;
+      std::cerr << " left+cropped width: " << total_width << "top+cropped height: " << total_height;
+      return empty;
+    }
+    // OMG: printf need to fall back to ugly-ass c-style
+    int   iSize  = SPHERICAL_XML_CONTENTS_CROP_FORMAT.length ( ) + 6 * 5; // 6 variables up to 99999
+    char *buffer = new char[iSize];
+    snprintf ( buffer, iSize, SPHERICAL_XML_CONTENTS_CROP_FORMAT.c_str ( ), cropped_width_pixels, cropped_height_pixels,
+        full_width_pixels, full_height_pixels,cropped_offset_left_pixels, cropped_offset_top_pixels );
+    additional_xml += buffer;
+    delete buffer;
+  }
+  m_strSphericalXML = SPHERICAL_XML_HEADER + SPHERICAL_XML_CONTENTS + additional_xml + SPHERICAL_XML_FOOTER;
   return m_strSphericalXML;
 }
 
@@ -755,9 +775,7 @@ int32_t Utils::get_aac_num_channels ( Container *pBox, std::fstream &inFile )
       return -1;
     }
     get_descriptor_length ( inFile );
-
-//TODO: 1 = from current position ...
-//    inFile.seekg ( 3, 1 ); // Seek to the decoder configuration descriptor
+    inFile.seekg ( 3, std::ios_base::cur ); // Seek to the decoder configuration descriptor
     char config_descriptor_tag = Box::readInt8 ( inFile );
 
     // Verify the read descriptor is a decoder config. descriptor.
@@ -766,8 +784,7 @@ int32_t Utils::get_aac_num_channels ( Container *pBox, std::fstream &inFile )
       return -1;
     }
     get_descriptor_length ( inFile );
-//TODO: 1 = from current position ...
-//    inFile.seekg ( 13, 1 ); // offset to the decoder specific config descriptor.
+    inFile.seekg ( 13, std::ios_base::cur ); // offset to the decoder specific config descriptor.
     char decoder_specific_descriptor_tag = Box::readInt8 ( inFile );
     
     // Verify the read descriptor is a decoder specific info descriptor

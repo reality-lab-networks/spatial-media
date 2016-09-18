@@ -89,8 +89,14 @@ void Parser::parseCommandLine ( int argc, char *argv[] )
         m_StereoMode = SM_NONE;
     }
     break;
-    case 'c':
-      
+    case 'c':  {
+      std::string str ( optarg ); // w:h:f_w:f_h:x:y => E.g. 2048:1024:3186:1482:100:100
+
+//        crop_match = re.match(crop_regex, crop)
+//        if not crop_match:
+//            print "Error: Invalid crop params: {crop}".format(crop=crop)
+//            return False
+    }
     break;
 
     case 'h':
@@ -163,7 +169,12 @@ Parser::enMode Parser::getStereoMode ( )
 
 int *Parser::getCrop ( )
 {
-  return m_crop;
+  // return NULL if no croping was specified.
+  for ( int t=0; t<6; t++ )  {
+    if ( m_crop[t] != 0 )
+      return m_crop;
+  }
+  return NULL;
 }
 
 bool Parser::getSpatialAudio ( )
