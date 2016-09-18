@@ -41,6 +41,19 @@ Box::~Box ( )
   m_iContentSize = m_iHeaderSize = m_iPosition = 0;
 }
 
+double Box::readDouble ( std::fstream &fs )
+{
+  union {
+    double  fVal;
+    int64_t iVal;
+    char bytes[8];
+  } buf;
+  fs.read ( buf.bytes, 8 );
+  // BigEndian to Host
+  buf.iVal = be64toh ( buf.iVal );
+  return buf.fVal;
+}
+
 uint8_t Box::readUint8 ( std::fstream &fs )
 {
   union {
@@ -50,6 +63,39 @@ uint8_t Box::readUint8 ( std::fstream &fs )
   fs.read ( buf.bytes, 1 );
   // BigEndian to Host
   return buf.iVal; //be8toh ( buf.iVal );
+}
+
+int8_t Box::readInt8 ( std::fstream &fs )
+{
+  union {
+    int8_t iVal;
+    char bytes[1];
+  } buf;
+  fs.read ( buf.bytes, 1 );
+  // BigEndian to Host
+  return buf.iVal; //be8toh ( buf.iVal );
+}
+
+int16_t Box::readInt16 ( std::fstream &fs )
+{
+  union {
+    int16_t iVal;
+    char bytes[2];
+  } buf;
+  fs.read ( buf.bytes, 2 );
+  // BigEndian to Host
+  return be16toh ( buf.iVal );
+}
+
+int32_t Box::readInt32 ( std::fstream &fs )
+{
+  union {
+    int32_t iVal;
+    char bytes[4];
+  } buf;
+  fs.read ( buf.bytes, 4 );
+  // BigEndian to Host
+  return be16toh ( buf.iVal );
 }
 
 uint32_t Box::readUint32 ( std::fstream &fs )
@@ -82,6 +128,26 @@ void Box::writeUint8 ( std::fstream &fs, uint8_t iVal )
   } buf;
   buf.iVal = iVal; // htobe8 ( iVal );
   fs.write ( (char *)buf.bytes, 1 );
+}
+
+void Box::writeInt16 ( std::fstream &fs, int16_t iVal )
+{
+  union {
+    int16_t iVal;
+    char bytes[2];
+  } buf;
+  buf.iVal = htobe16 ( iVal );
+  fs.write ( (char *)buf.bytes, 2 );
+}
+
+void Box::writeInt32 ( std::fstream &fs, int32_t iVal )
+{
+  union {
+    int32_t iVal;
+    char bytes[4];
+  } buf;
+  buf.iVal = htobe32 ( iVal );
+  fs.write ( (char *)buf.bytes, 4 );
 }
 
 void Box::writeUint32 ( std::fstream &fs, uint32_t iVal )

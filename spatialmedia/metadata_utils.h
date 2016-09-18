@@ -87,6 +87,7 @@ static AudioMetadata g_DefAudioMetadata;
 
 class Box;
 class SA3DBox;
+class Container;
 class Mpeg4Container;
 
 class Metadata
@@ -141,9 +142,9 @@ class Utils
     std::string &generate_spherical_xml ( SpatialMedia::Parser::enMode, int * );
     uint8_t get_descriptor_length  ( std::fstream & );
     int32_t get_expected_num_audio_components ( std::string &, uint32_t );
-    int32_t  get_num_audio_channels ( Box *, std::fstream & );
-    uint32_t get_sample_description_num_channels ( Box *, std::fstream & ); 
-    int32_t  get_aac_num_channels ( Box *, std::fstream & );
+    int32_t  get_num_audio_channels ( Container *, std::fstream & );
+    uint32_t get_sample_description_num_channels ( Container *, std::fstream & ); 
+    int32_t  get_aac_num_channels ( Container *, std::fstream & );
     uint32_t get_num_audio_tracks ( Mpeg4Container *, std::fstream & );
 
   private:

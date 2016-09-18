@@ -650,170 +650,184 @@ uint8_t Utils::get_descriptor_length ( std::fstream &inFile )
   return descriptor_length;
 }
 
-int32_t Utils::get_expected_num_audio_components ( std::string &, uint32_t )
+int32_t Utils::get_expected_num_audio_components ( std::string &strAmbisonicType, uint32_t iAmbisonicsOrder )
 {
-/*
-def get_expected_num_audio_components(ambisonics_type, ambisonics_order):
-    """ Returns the expected number of ambisonic components for a given
-        ambisonic type and ambisonic order.
-    """
-    if (ambisonics_type == 'periphonic'):
-        return ((ambisonics_order + 1) * (ambisonics_order + 1))
-    else:
-        return -1
-
-def get_num_audio_channels(stsd, in_fh):
-    if stsd.name != mpeg.constants.TAG_STSD:
-        print "get_num_audio_channels should be given a STSD box"
-        return -1
-    for sample_description in stsd.contents:
-        if sample_description.name == mpeg.constants.TAG_MP4A:
-            return get_aac_num_channels(sample_description, in_fh)
-        elif sample_description.name in mpeg.constants.SOUND_SAMPLE_DESCRIPTIONS:
-            return get_sample_description_num_channels(sample_description, in_fh)
-    return -1
-*/
+  // Returns the expected number of ambisonic components for a given
+  // ambisonic type and ambisonic order.
+  if ( strAmbisonicType == "periphonic" )
+    return ((iAmbisonicsOrder + 1) * (iAmbisonicsOrder + 1));
   return -1;
 }
 
-int32_t Utils::get_num_audio_channels ( Box *, std::fstream & )
+int32_t Utils::get_num_audio_channels ( Container *pSTSD, std::fstream &inFile )
 {
-/*
-def get_num_audio_channels(stsd, in_fh):
-    if stsd.name != mpeg.constants.TAG_STSD:
-        print "get_num_audio_channels should be given a STSD box"
-        return -1
-    for sample_description in stsd.contents:
-        if sample_description.name == mpeg.constants.TAG_MP4A:
-            return get_aac_num_channels(sample_description, in_fh)
-        elif sample_description.name in mpeg.constants.SOUND_SAMPLE_DESCRIPTIONS:
-            return get_sample_description_num_channels(sample_description, in_fh)
-    return -1
-*/
+  if ( ! pSTSD )
+    return -1;
+  if ( memcmp ( pSTSD->m_name, constants::TAG_STSD, 4 ) != 0 )  {
+    std::cerr << "get_num_audio_channels should be given a STSD box" << std::endl;
+    return -1;
+  }
+
+  int iArraySize = (int)(sizeof ( constants::SOUND_SAMPLE_DESCRIPTIONS ) / sizeof ( constants::SOUND_SAMPLE_DESCRIPTIONS[0] ) );
+  std::vector<Box *>::iterator it = pSTSD->m_listContents.begin ( );
+  while ( it != pSTSD->m_listContents.end ( ) )  {
+    Container *pSample = (Container *)*it++;
+    if ( memcmp ( pSample->m_name, constants::TAG_MP4A, 4 ) == 0 )
+      return get_aac_num_channels ( pSample, inFile );
+    else if ( inArray ( pSample->m_name, constants::SOUND_SAMPLE_DESCRIPTIONS, iArraySize ) )
+      return get_sample_description_num_channels ( pSample, inFile );
+  } 
   return -1;
 }
 
-uint32_t Utils::get_sample_description_num_channels ( Box *, std::fstream & )
+uint32_t Utils::get_sample_description_num_channels ( Container *pSample, std::fstream &inFile )
 {
-/*
-def get_sample_description_num_channels(sample_description, in_fh):
-    """Reads the number of audio channels from a sound sample description.
-    """
-    p = in_fh.tell()
-    in_fh.seek(sample_description.content_start() + 8)
+  // Reads the number of audio channels from a sound sample description.
+  char buffer[8];
+  int iPos = inFile.tellg ( );
+  inFile.seekg ( pSample->content_start ( ) + 8 );
 
-    version = struct.unpack(">h", in_fh.read(2))[0]
-    revision_level = struct.unpack(">h", in_fh.read(2))[0]
-    vendor = struct.unpack(">i", in_fh.read(4))[0]
-    if version == 0:
-        num_audio_channels = struct.unpack(">h", in_fh.read(2))[0]
-        sample_size_bytes = struct.unpack(">h", in_fh.read(2))[0]
-    elif version == 1:
-        num_audio_channels = struct.unpack(">h", in_fh.read(2))[0]
-        sample_size_bytes = struct.unpack(">h", in_fh.read(2))[0]
-        samples_per_packet = struct.unpack(">i", in_fh.read(4))[0]
-        bytes_per_packet = struct.unpack(">i", in_fh.read(4))[0]
-        bytes_per_frame = struct.unpack(">i", in_fh.read(4))[0]
-        bytes_per_sample = struct.unpack(">i", in_fh.read(4))[0]
-    elif version == 2:
-        always_3 = struct.unpack(">h", in_fh.read(2))[0]
-        always_16 = struct.unpack(">h", in_fh.read(2))[0]
-        always_minus_2 = struct.unpack(">h", in_fh.read(2))[0]
-        always_0 = struct.unpack(">h", in_fh.read(2))[0]
-        always_65536 = struct.unpack(">i", in_fh.read(4))[0]
-        size_of_struct_only = struct.unpack(">i", in_fh.read(4))[0]
-        audio_sample_rate = struct.unpack(">d", in_fh.read(8))[0]
-        num_audio_channels = struct.unpack(">i", in_fh.read(4))[0]
-    else:
-        print "Unsupported version for " + sample_description.name + " box"
-        return -1
-
-    in_fh.seek(p)
-    return num_audio_channels
-*/
-  return 0;
+  int16_t iAudioChannels, iSampleSizeBytes; 
+  int16_t iVersion  = Box::readInt16 ( inFile );
+  int16_t iRevLevel = Box::readInt16 ( inFile );
+  int32_t iVendor   = Box::readInt32 ( inFile );
+  if ( iVersion == 0 )  {
+    iAudioChannels  = Box::readInt16 ( inFile );
+    iSampleSizeBytes= Box::readInt16 ( inFile );
+  }
+  else if ( iVersion == 1 )  {
+    iAudioChannels  = Box::readInt16 ( inFile );
+    iSampleSizeBytes= Box::readInt16 ( inFile );
+    int32_t iBytesPerPacket, iBytesPerFrame, iBytesPerSample;
+    iBytesPerPacket = Box::readInt32 ( inFile );
+    iBytesPerFrame  = Box::readInt32 ( inFile );
+    iBytesPerSample = Box::readInt32 ( inFile );
+  }
+  else if ( iVersion == 2 )  {
+    int16_t always_3, always_16, always_minus_2, always_0;
+    int32_t always_65536, size_of_struct_only;
+    double  audio_sample_rate;
+    always_3           = Box::readInt16 ( inFile );
+    always_16          = Box::readInt16 ( inFile );
+    always_minus_2     = Box::readInt16 ( inFile );
+    always_0           = Box::readInt16 ( inFile );
+    always_65536       = Box::readInt32 ( inFile );
+    size_of_struct_only= Box::readInt32 ( inFile );
+    audio_sample_rate  = Box::readDouble( inFile );
+    iAudioChannels     = Box::readInt16 ( inFile );
+  }
+  else  {
+    inFile.seekg ( iPos );
+    std::cerr << "Unsupported version for " << pSample->m_name << " box" << std::endl;
+    return -1;
+  }
+  inFile.seekg ( iPos );
+  return iAudioChannels;
 }
 
-int32_t Utils::get_aac_num_channels ( Box *, std::fstream & )
+int32_t Utils::get_aac_num_channels ( Container *pBox, std::fstream &inFile )
 {
-/*
-def get_aac_num_channels(box, in_fh):
-    """Reads the number of audio channels from AAC's AudioSpecificConfig
-       descriptor within the esds child box of the input mp4a or wave box.
-    """
-    p = in_fh.tell()
-    if box.name not in [mpeg.constants.TAG_MP4A, mpeg.constants.TAG_WAVE]:
-        return -1
+  // Reads the number of audio channels from AAC's AudioSpecificConfig
+  // descriptor within the esds child box of the input mp4a or wave box.
+  int iPos = inFile.tellg ( );
+  bool bFound = memcmp ( pBox->m_name, constants::TAG_MP4A, 4 ) == 0;
+  bFound     |= memcmp ( pBox->m_name, constants::TAG_WAVE, 4 ) == 0;
+  if ( ! bFound )
+    return -1;
 
-    for element in box.contents:
-        if element.name == mpeg.constants.TAG_WAVE:
-            # Handle .mov with AAC audio, where the structure is:
-            #     stsd -> mp4a -> wave -> esds
-            channel_configuration = get_aac_num_channels(element, in_fh)
-            break
+  int32_t channel_configuration = 0;
+  std::vector<Box *>::iterator it = pBox->m_listContents.begin ( );
+  while ( it != pBox->m_listContents.end ( ) )  {
+    Container *pElement = (Container *)*it++;
+    if ( memcmp ( pElement->m_name, constants::TAG_WAVE, 4 ) == 0 )  {
+      channel_configuration = get_aac_num_channels ( pElement, inFile );
+      break;
+    }
+    if ( memcmp ( pElement->m_name, constants::TAG_ESDS, 4 ) != 0 )
+      continue;
 
-        if element.name != mpeg.constants.TAG_ESDS:
-          continue
-        in_fh.seek(element.content_start() + 4)
-        descriptor_tag = struct.unpack(">c", in_fh.read(1))[0]
+    inFile.seekg ( pElement->content_start ( ) + 4 );
+    char descriptor_tag = Box::readInt8 ( inFile );
 
-        # Verify the read descriptor is an elementary stream descriptor
-        if ord(descriptor_tag) != 3:  # Not an MP4 elementary stream.
-            print "Error: failed to read elementary stream descriptor."
-            return -1
-        get_descriptor_length(in_fh)
-        in_fh.seek(3, 1)  # Seek to the decoder configuration descriptor
-        config_descriptor_tag = struct.unpack(">c", in_fh.read(1))[0]
+    // Verify the read descriptor is an elementary stream descriptor
+    if ( descriptor_tag != 3 )  { // Not an MP4 elementary stream.
+      std::cerr << "Error: failed to read elementary stream descriptor." << std::endl;
+      return -1;
+    }
+    get_descriptor_length ( inFile );
 
-        # Verify the read descriptor is a decoder config. descriptor.
-        if ord(config_descriptor_tag) != 4:
-            print "Error: failed to read decoder config. descriptor."
-            return -1
-        get_descriptor_length(in_fh)
-        in_fh.seek(13, 1) # offset to the decoder specific config descriptor.
-        decoder_specific_descriptor_tag = struct.unpack(">c", in_fh.read(1))[0]
+//TODO: 1 = from current position ...
+//    inFile.seekg ( 3, 1 ); // Seek to the decoder configuration descriptor
+    char config_descriptor_tag = Box::readInt8 ( inFile );
 
-        # Verify the read descriptor is a decoder specific info descriptor
-        if ord(decoder_specific_descriptor_tag) != 5:
-            print "Error: failed to read MP4 audio decoder specific config."
-            return -1
-        audio_specific_descriptor_size = get_descriptor_length(in_fh)
-        assert audio_specific_descriptor_size >= 2
-        decoder_descriptor = struct.unpack(">h", in_fh.read(2))[0]
-        object_type = (int("F800", 16) & decoder_descriptor) >> 11
-        sampling_frequency_index = (int("0780", 16) & decoder_descriptor) >> 7
-        if sampling_frequency_index == 0:
-            # TODO: If the sample rate is 96kHz an additional 24 bit offset
-            # value here specifies the actual sample rate.
-            print "Error: Greater than 48khz audio is currently not supported."
-            return -1
-        channel_configuration = (int("0078", 16) & decoder_descriptor) >> 3
-    in_fh.seek(p)
-    return channel_configuration
-*/
-  return -1;
+    // Verify the read descriptor is a decoder config. descriptor.
+    if ( config_descriptor_tag != 4 )  {
+      std::cerr << "Error: failed to read decoder config. descriptor." << std::endl;
+      return -1;
+    }
+    get_descriptor_length ( inFile );
+//TODO: 1 = from current position ...
+//    inFile.seekg ( 13, 1 ); // offset to the decoder specific config descriptor.
+    char decoder_specific_descriptor_tag = Box::readInt8 ( inFile );
+    
+    // Verify the read descriptor is a decoder specific info descriptor
+    if ( decoder_specific_descriptor_tag != 5 )  {
+      std::cerr << "Error: failed to read MP4 audio decoder specific config." << std::endl;
+      return -1;
+    }
+    int audio_specific_descriptor_size = get_descriptor_length ( inFile );
+    // assert ( audio_specific_descriptor_size >= 2 );
+    int16_t  decoder_descriptor = Box::readInt16 ( inFile );
+    uint32_t object_type = ( 0xF800 & decoder_descriptor ) >> 11;
+    uint32_t sampling_frequency_index = ( 0x0780 & decoder_descriptor ) >> 7;
+    if ( sampling_frequency_index == 0 )  {
+      // TODO: If the sample rate is 96kHz an additional 24 bit offset
+      // value here specifies the actual sample rate.
+      std::cerr << "Error: Greater than 48khz audio is currently not supported." << std::endl;
+      return -1;
+    }
+    channel_configuration = ( 0x0078 & decoder_descriptor ) >> 3;
+  }
+  inFile.seekg ( iPos );
+  return channel_configuration;
 }
 
-uint32_t Utils::get_num_audio_tracks ( Mpeg4Container *, std::fstream & )
+uint32_t Utils::get_num_audio_tracks ( Mpeg4Container *pMPEG4, std::fstream &inFile )
 {
-/*
-def get_num_audio_tracks(mpeg4_file, in_fh):
-    """ Returns the number of audio track in the input mpeg4 file. """
-    num_audio_tracks = 0
-    for element in mpeg4_file.moov_box.contents:
-        if (element.name == mpeg.constants.TAG_TRAK):
-            for sub_element in element.contents:
-                if (sub_element.name != mpeg.constants.TAG_MDIA):
-                    continue
-                for mdia_sub_element in sub_element.contents:
-                    if (mdia_sub_element.name != mpeg.constants.TAG_HDLR):
-                        continue
-                    position = mdia_sub_element.content_start() + 8
-                    in_fh.seek(position)
-                    if (in_fh.read(4) == mpeg.constants.TAG_SOUN):
-                        num_audio_tracks += 1
-    return num_audio_tracks
-*/
-  return 0;
+  // Returns the number of audio track in the input mpeg4 file.
+  int num_audio_tracks = 0;
+  Container *pMoov = (Container *)pMPEG4->m_pMoovBox;
+  if ( ! pMoov )
+    return 0;
+
+  std::vector<Box *>::iterator it = pMoov->m_listContents.begin ( );
+  while ( it != pMoov->m_listContents.end ( ) )  {
+    Container *pBox = (Container *)*it++;
+    if ( memcmp ( pBox->m_name, constants::TAG_TRAK, 4 ) != 0 )
+      continue;
+
+    std::vector<Box *>::iterator it2 = pBox->m_listContents.begin ( );
+    while ( it2 != pBox->m_listContents.end ( ) )  {
+      Container *pSub = (Container *)*it2++;
+      if ( memcmp ( pSub->m_name, constants::TAG_MDIA, 4 ) != 0 )
+        continue;
+
+      std::vector<Box *>::iterator it3 = pSub->m_listContents.begin ( );
+      while ( it3 != pSub->m_listContents.end ( ) )  {
+        Container *pMDIA = (Container *)*it3++;
+        if ( memcmp ( pMDIA->m_name, constants::TAG_HDLR, 4 ) != 0 )
+          continue;
+
+        int iPos = pMDIA->content_start ( ) + 8;
+        inFile.seekg ( iPos );
+        char buffer[4];
+        inFile.read ( buffer, 4 );
+        if ( memcmp ( buffer, constants::TAG_SOUN, 4 ) == 0 )
+          num_audio_tracks++;
+      }
+    }
+  }
+
+  return num_audio_tracks;
 }
 

@@ -44,9 +44,16 @@ class Box
     void co64_copy  ( std::fstream &, std::fstream &, Box *, int32_t );
 
   public:
-    static uint8_t  readUint8  ( std::fstream &fs );
+    static   int8_t readInt8   ( std::fstream &fs );
+    static  int16_t readInt16  ( std::fstream &fs );
+    static  int32_t readInt32  ( std::fstream &fs );
+    static  uint8_t readUint8  ( std::fstream &fs );
     static uint32_t readUint32 ( std::fstream &fs );
     static uint64_t readUint64 ( std::fstream &fs );
+    static double   readDouble ( std::fstream &fs );
+
+    static void     writeInt16 ( std::fstream &fs, int16_t  );
+    static void     writeInt32 ( std::fstream &fs, int32_t  );
     static void     writeUint8 ( std::fstream &fs, uint8_t  );
     static void     writeUint32( std::fstream &fs, uint32_t );
     static void     writeUint64( std::fstream &fs, uint64_t );
