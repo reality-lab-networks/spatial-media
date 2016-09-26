@@ -27,7 +27,7 @@ Box::Box ( )
 {
   memset ( (char *)m_name, ' ', sizeof ( m_name ) );
   m_iType         = constants::Box;
-  m_iPosition     = -1;
+  m_iPosition     = 0;
   m_iHeaderSize   = 0;
   m_iContentSize  = 0;
   m_pContents     = NULL;
@@ -174,8 +174,8 @@ Box *Box::load ( std::fstream &fs, uint32_t iPos, uint32_t iEnd )
 {
   // Loads the box located at a position in a mp4 file
   //
-  if ( iPos < 1 )
-       iPos = fs.tellg ( );
+//  if ( iPos < 1 ) // iPos is None:
+//       iPos = fs.tellg ( );
 
   uint32_t iHeaderSize, tmp = 0;
   uint64_t iSize = 0LL;
@@ -308,6 +308,9 @@ void Box::index_copy ( std::fstream &fsIn, std::fstream &fsOut, Box *pBox, bool 
 
   uint32_t iHeader = readUint32 ( fs );
   uint32_t iValues = readUint32 ( fs );
+ 
+std::cout <<  "index_copy :: HDR: " << iHeader << " VAL: " << iValues << std::endl;
+
   writeUint32 ( fsOut, iHeader );
   writeUint32 ( fsOut, iValues );
   if ( bBigMode )  {

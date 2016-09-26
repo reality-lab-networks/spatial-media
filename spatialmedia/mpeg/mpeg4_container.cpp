@@ -122,7 +122,7 @@ void Mpeg4Container::save ( std::fstream &fsIn, std::fstream &fsOut )
     }
     iNewPos += pBox->size ( );
   }
-  uint32_t iDelta = iNewPos - m_iHeaderSize;
+  uint32_t iDelta = iNewPos - m_iFirstMDatPos;
   it = m_listContents.begin ( );
   while ( it != m_listContents.end () )  {
     Box *pBox = *it++;

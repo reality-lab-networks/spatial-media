@@ -25,6 +25,7 @@
 
 #include "sa3d.h"
 
+
 Container::Container ( uint32_t iPadding )
    : Box ( )
 {
@@ -38,22 +39,26 @@ Container::~Container ( )
 
 Box *Container::load ( std::fstream &fs, uint32_t iPos, uint32_t iEnd )
 {
-  if ( iPos == 0 )
-       iPos = fs.tellg ( );
+//  if ( iPos == 0 )
+//       iPos = fs.tellg ( );
 
+std::cout << "VAROL1: After: " << iPos << std::endl;
   fs.seekg ( iPos );
   uint32_t iHeaderSize = 8;
   uint32_t t, iSize = readUint32 ( fs );
   char name[4];
   fs.read ( name, 4 );
 
-  bool bIsBox = false;
-  for ( t=0; t<sizeof ( constants::CONTAINERS_LIST ); t++ )  {
+  int32_t iArrSize = (int32_t)(sizeof(constants::CONTAINERS_LIST)/sizeof(constants::CONTAINERS_LIST[0]));
+  bool bIsBox = true;
+  for ( t=0; t<iArrSize; t++ )  {
     if ( memcmp ( name, constants::CONTAINERS_LIST[t], 4 ) == 0 )  {
-      bIsBox = true;
+      bIsBox = false;
       break;
     }
   }
+std::cout <<  "VAROL2: name: " << name << " size: " << iSize << " IsBox: " << bIsBox << std::endl;
+
 
   // Handle the mp4a decompressor setting (wave -> mp4a).
   if ( memcmp ( name, constants::TAG_MP4A, 4 ) == 0 && iSize == 12 ) 
@@ -86,7 +91,8 @@ Box *Container::load ( std::fstream &fs, uint32_t iPos, uint32_t iEnd )
 
   uint32_t iCurrentPos = 0;
   int16_t  iSampleDescVersion = 0;
-  for ( t=0; t<sizeof ( constants::SOUND_SAMPLE_DESCRIPTIONS ); t++ )  {
+  iArrSize = (int32_t)(sizeof(constants::SOUND_SAMPLE_DESCRIPTIONS)/sizeof(constants::SOUND_SAMPLE_DESCRIPTIONS[0]));
+  for ( t=0; t<iArrSize; t++ )  {
     if ( memcmp ( name, constants::SOUND_SAMPLE_DESCRIPTIONS[t], 4 ) == 0 )  {
       iCurrentPos = fs.tellg ( );
       fs.seekg ( iCurrentPos + 8 );
@@ -116,6 +122,9 @@ Box *Container::load ( std::fstream &fs, uint32_t iPos, uint32_t iEnd )
   pNewBox->m_iHeaderSize  = iHeaderSize;
   pNewBox->m_iContentSize = iSize - iHeaderSize;
   pNewBox->m_iPadding     = iPadding;
+
+std::cout << "  VAROL:: name: " << name << " pos: " << iPos << " hdrSize: " << iHeaderSize << " padding: " << iPadding << std::endl;
+
   pNewBox->m_listContents = load_multiple ( fs, iPos + iHeaderSize + iPadding, iPos + iSize );
 
   if ( pNewBox->m_listContents.empty ( ) )  {
@@ -128,6 +137,7 @@ Box *Container::load ( std::fstream &fs, uint32_t iPos, uint32_t iEnd )
 
 std::vector<Box *> Container::load_multiple ( std::fstream &fs, uint32_t iPos, uint32_t iEnd )
 {
+std::cout << "VAROL { pos: " << iPos << std::endl;
   std::vector<Box *> list, empty;
   while ( iPos < iEnd )  {
     Box *pBox = load ( fs, iPos, iEnd );
@@ -139,6 +149,7 @@ std::vector<Box *> Container::load_multiple ( std::fstream &fs, uint32_t iPos, u
     list.push_back ( pBox );
     iPos = pBox->m_iPosition + pBox->size ( );
   }
+std::cout << "VAROL } " << std:: endl;
   return list;
 }
 

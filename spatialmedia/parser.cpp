@@ -106,6 +106,10 @@ void Parser::parseCommandLine ( int argc, char *argv[] )
       exit ( 0 );
     }
   }
+  if ( argc > 2 )
+    m_strInFile = argv[argc-2];
+  if ( argc > 3 )
+    m_strOutFile = argv[argc-1];
 }
 
 void Parser::printHelp ( )
@@ -149,7 +153,7 @@ void Parser::printHelp ( )
 
 std::string &Parser::getInFile ( )
 {
-  return m_strInfile;
+  return m_strInFile;
 }
 
 std::string &Parser::getOutFile ( )

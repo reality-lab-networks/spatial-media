@@ -17,6 +17,7 @@
  ****************************************************************************/
 
 #include <iostream>
+#include <sstream>
 
 #include "mpeg/constants.h"
 #include "mpeg/mpeg4_container.h"
@@ -241,8 +242,14 @@ bool Utils::mpeg4_add_audio_metadata ( Mpeg4Container *pMPEG4, std::fstream &inF
   return mpeg4_add_spatial_audio ( pMPEG4, inFile, pAudio );
 }
 
-bool inArray ( char *pName, const char **ppArray, int iSize )  {
-  
+bool inArray ( char *pName, const char **ppArray, int iSize )
+{
+  if ( pName == NULL )
+    return false;
+  for ( int t=0; t<iSize; t++ )  {
+    if ( memcmp ( pName, ppArray[t], 4 ) == 0 )
+      return true;
+  }  
 
   return false;
 }
@@ -388,7 +395,7 @@ Metadata *Utils::parse_spherical_mpeg4 ( Mpeg4Container *pMPEG4, std::fstream &f
     return NULL;
 
   int iTrackNum = 0;
-  int iArraySize = sizeof ( constants::SOUND_SAMPLE_DESCRIPTIONS );
+  int iArraySize = (int)( sizeof ( constants::SOUND_SAMPLE_DESCRIPTIONS ) / sizeof ( constants::SOUND_SAMPLE_DESCRIPTIONS[0]) );
   uint8_t  buffer[16];
   char    *pNewedBuffer  = NULL;
   uint8_t *pSubElementID = NULL; // pointing to array of bytes
@@ -406,7 +413,11 @@ Metadata *Utils::parse_spherical_mpeg4 ( Mpeg4Container *pMPEG4, std::fstream &f
     if ( memcmp ( pBox->m_name, constants::TAG_TRAK, 4 ) != 0 )
       continue;
 
-    std::string trackName = "Track " + iTrackNum++;
+    std::stringstream ss;
+    ss << "Track " << iTrackNum++;
+    std::string trackName = ss.str ( );
+    std::cout << "\t" << trackName << std::endl;
+
     std::vector<Box *>::iterator it2 = pBox->m_listContents.begin ( );
     while ( it2 != pBox->m_listContents.end ( ) )  {
       Container *pSub = (Container *)*it2++;
@@ -427,6 +438,7 @@ Metadata *Utils::parse_spherical_mpeg4 ( Mpeg4Container *pMPEG4, std::fstream &f
             file.read ( pNewedBuffer, pSub->m_iContentSize - 16);
             pContents = (uint8_t *)pNewedBuffer;
           }
+std::cout << " VAROL 3 : " << ( pSub->m_iContentSize - 16 )  << std::endl;
           // metadata.video[trackName] = parse_spherical_xml(contents, console)
           std::map<std::string, std::string> map = parse_spherical_xml ( pContents ); 
 // TODO: Figure out what type metadata.video should actually be
@@ -466,9 +478,6 @@ Metadata *Utils::parse_spherical_mpeg4 ( Mpeg4Container *pMPEG4, std::fstream &f
               std::vector<Box *>::iterator it6 = pSTSD->m_listContents.begin ( );
               while ( it6 != pSTSD->m_listContents.end ( ) )  {
                 Container *pSA3D = (Container *)*it6++;
-                if ( memcmp ( pSA3D->m_name, constants::TAG_STSD, 4 ) != 0 )
-                  continue;
-                            
                 if ( ! inArray ( pSA3D->m_name, constants::SOUND_SAMPLE_DESCRIPTIONS, iArraySize ) )
                   continue;
 
@@ -499,7 +508,7 @@ Metadata *Utils::parse_spherical_mpeg4 ( Mpeg4Container *pMPEG4, std::fstream &f
 
 void Utils::parse_mpeg4 ( std::string &strFileName )
 {
-  std::fstream file ( strFileName.c_str ( ), std::ios::in | std::ios::binary );
+  std::fstream file ( strFileName.c_str ( ), std::ios::in | std::ios::binary |  std::ios::ate );
   if ( ! file.is_open ( ) )  {
     std::cerr << "Error \"" << strFileName << "\" does not exist or do not have permission." << std::endl;
     return;
@@ -515,7 +524,7 @@ void Utils::parse_mpeg4 ( std::string &strFileName )
 
 void Utils::inject_mpeg4 ( std::string &strInFile, std::string &strOutFile, Metadata *pMetadata )
 {
-  std::fstream inFile ( strInFile.c_str ( ), std::ios::in | std::ios::binary );
+  std::fstream inFile ( strInFile.c_str ( ), std::ios::in | std::ios::binary | std::ios::ate );
   if ( ! inFile.is_open ( ) ) {
     std::cerr << "Error \"" << strInFile << "\" does not exist or do not have permission." << std::endl;
     return;
@@ -548,7 +557,7 @@ void Utils::inject_mpeg4 ( std::string &strInFile, std::string &strOutFile, Meta
 
 void Utils::parse_metadata ( std::string &strFile )
 {
-  std::fstream inFile ( strFile.c_str ( ), std::ios::in | std::ios::binary );
+  std::fstream inFile ( strFile.c_str ( ), std::ios::in | std::ios::binary | std::ios::ate );
   if ( ! inFile.is_open ( ) ) {
     std::cerr << "Error \"" << strFile << "\" does not exist or do not have permission." << std::endl;
     return;
@@ -574,7 +583,7 @@ void Utils::inject_metadata ( std::string &strInFile, std::string &strOutFile, M
     std::cerr << "Input and output cannot be the same" << std::endl;
     return;
   }
-  std::fstream inFile ( strInFile.c_str ( ), std::ios::in | std::ios::binary );
+  std::fstream inFile ( strInFile.c_str ( ), std::ios::in | std::ios::binary | std::ios::ate );
   if ( ! inFile.is_open ( ) ) {
     std::cerr << "Error \"" << strInFile << "\" does not exist or do not have permission." << std::endl;
     return;
@@ -584,7 +593,7 @@ void Utils::inject_metadata ( std::string &strInFile, std::string &strOutFile, M
   std::string strExt;
   std::string::size_type idx = strInFile.rfind ( '.' );
   if ( idx != std::string::npos )
-    strExt = strInFile.substr ( idx + 1 );
+    strExt = strInFile.substr ( idx );
 
   std::cout << "Processing: " << strInFile << std::endl;
   if ( ! inArray ( (char *)strExt.c_str ( ), MPEG_FILE_EXTENSIONS, iArraySize ) )  {

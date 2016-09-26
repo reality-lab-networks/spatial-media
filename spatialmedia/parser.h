@@ -37,7 +37,7 @@ class Parser
     void printHelp ( );
 
   private:
-    std::string m_strInfile;
+    std::string m_strInFile;
     std::string m_strOutFile;
     bool   m_bInject;
     enMode m_StereoMode;
