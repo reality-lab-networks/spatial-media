@@ -34,9 +34,10 @@ class Box
     static void clear ( std::vector<Box *> & );
 
     int content_start ( );
-    void save ( std::fstream &, std::fstream &, int32_t );
+    virtual void save ( std::fstream &, std::fstream &, int32_t );
     void set  ( uint8_t *, uint32_t );
     int  size ( );
+    const char *name( );
     virtual void print_structure ( const char * );
     void tag_copy   ( std::fstream &, std::fstream &, int32_t );
     void index_copy ( std::fstream &, std::fstream &, Box *, bool, int32_t );

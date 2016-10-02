@@ -38,7 +38,7 @@ class Container : public Box
     void remove ( const char * );
     bool add    ( Box * );
     bool merge  ( Box * );
-    void save ( std::fstream &, std::fstream &, int32_t );
+    virtual void save ( std::fstream &, std::fstream &, int32_t );
 
 public:
     uint32_t m_iPadding;

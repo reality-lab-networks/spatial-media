@@ -313,7 +313,7 @@ std::map<std::string, std::string> Utils::parse_spherical_xml ( uint8_t *pConten
   char buffer[8192];
   char *ptr = NULL;
   std::string strContents;
-  mxml_node_t *parsed_xml = mxmlLoadString ( NULL, (char *)pContents, MXML_NO_CALLBACK );
+  mxml_node_t *parsed_xml = mxmlLoadString ( NULL, (char *)pContents, MXML_OPAQUE_CALLBACK ); // MXML_NO_CALLBACK );
   if ( ! parsed_xml )  {
     std::cerr << "\t\tParser Error on XML. " << (char *)pContents << std::endl;
     return m_mapSphericalDictionary;
@@ -329,24 +329,29 @@ std::map<std::string, std::string> Utils::parse_spherical_xml ( uint8_t *pConten
     }
     mxmlElementSetAttr ( pNode, "xmlns:rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#" );
   }
-  /* Find the first "a" element with "href" to a URL */
-  //  node = mxmlFindElement(tree, tree, "a", "href", "http://www.minixml.org/", MXML_DESCEND);
+
   int iArraySize = (int)( sizeof ( SPHERICAL_TAGS_LIST ) / sizeof ( SPHERICAL_TAGS_LIST[0] ) );
-  std::string strTag, strText;
-  mxml_node_t *pChild = mxmlGetFirstChild ( parsed_xml );
+  std::string strText;
+  mxml_node_t *pChild = mxmlGetFirstChild ( pNode );
   while ( pChild != NULL )  {
     const char *pTag  = mxmlGetElement ( pChild ); 
-    const char *pText = mxmlGetText    ( pChild, NULL );
-    if ( pText != NULL && pTag != NULL )  {
-      if ( inArray ( (char *)strTag.c_str ( ), SPHERICAL_TAGS_LIST, iArraySize ) )  {
-        std::cout << "\t\t" << strTag << " = " << strText << std::endl;
-        m_mapSphericalDictionary[strTag] = strText;
+    const char *pText = mxmlGetOpaque  ( pChild );
+    if ( pTag != NULL )  {
+      const char *p = strchr ( pTag, ':' );
+      if ( p )
+        pTag = p+1; 
+      if ( inArray ( (char *)pTag, SPHERICAL_TAGS_LIST, iArraySize ) )  {
+        strText = "";
+        if ( pText )
+          strText = pText;
+        std::cout << "\t\t" << pTag << " = " << strText << std::endl;
+        m_mapSphericalDictionary[pTag] = strText;
       }
       else  {
-       std::cout << "\t\tUnknown: " << strTag<< " = " << strText << std::endl;
-       // tag = child.tag
-       //   if child.tag[:len(spherical_prefix)] == spherical_prefix:
-       //      tag = child.tag[len(spherical_prefix):]
+        std::cout << "\t\tUnknown: " << pTag<< " = " << strText << std::endl;
+        // tag = child.tag
+        //   if child.tag[:len(spherical_prefix)] == spherical_prefix:
+        //      tag = child.tag[len(spherical_prefix):]
       }
     }
     pChild = mxmlGetNextSibling ( pChild );
@@ -482,9 +487,13 @@ std::cout << " VAROL 3 : " << ( pSub->m_iContentSize - 16 )  << std::endl;
                   continue;
 
                 pMetadata->m_iNumAudioChannels = get_num_audio_channels ( pSTSD, file );
+                std::cout << "SOUND SAMLE " << pSA3D->m_name[0] << pSA3D->m_name[1] << pSA3D->m_name[2] << pSA3D->m_name[3];
+                std::cout << "  num Channels: " << pMetadata->m_iNumAudioChannels << std::endl;
+
                 std::vector<Box *>::iterator it7 = pSA3D->m_listContents.begin ( );
                 while ( it7 != pSA3D->m_listContents.end ( ) )  {
                   Container *pItem = (Container *)*it7++;
+std::cout << "SA3D Container Names : " << pItem->m_name << std::endl;
                   if ( memcmp ( pItem->m_name, constants::TAG_SA3D, 4 ) == 0 )  {
                     SA3DBox *pSA = (SA3DBox *)pItem;
                     pSA->print_box ( );
@@ -552,7 +561,7 @@ void Utils::inject_mpeg4 ( std::string &strInFile, std::string &strOutFile, Meta
     std::cerr << "Error file: \"" << strOutFile << "\" could not create or do not have permission." << std::endl;
     return;
   }
-  pMPEG4->save ( inFile, outFile );
+  pMPEG4->save ( inFile, outFile, 0 );
 }
 
 void Utils::parse_metadata ( std::string &strFile )

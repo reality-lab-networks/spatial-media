@@ -35,7 +35,7 @@ class Mpeg4Container : public Container
 
     void merge ( Box * );
     virtual void print_structure ( const char *p="" );
-    void save ( std::fstream &, std::fstream & );
+    virtual void save ( std::fstream &, std::fstream &, int32_t );
 
 public:
   Box *m_pMoovBox;

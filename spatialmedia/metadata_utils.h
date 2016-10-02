@@ -47,9 +47,7 @@ static std::string SPHERICAL_XML_HEADER = "<?xml version=\"1.0\"?>"\
 
 static std::string SPHERICAL_XML_CONTENTS = "<GSpherical:Spherical>true</GSpherical:Spherical>"\
     "<GSpherical:Stitched>true</GSpherical:Stitched>"\
-    "<GSpherical:StitchingSoftware>"\
-    "Spherical Metadata Tool"\
-    "</GSpherical:StitchingSoftware>"\
+    "<GSpherical:StitchingSoftware>360Tube stitching</GSpherical:StitchingSoftware>"\
     "<GSpherical:ProjectionType>equirectangular</GSpherical:ProjectionType>";
 
 static std::string SPHERICAL_XML_CONTENTS_TOP_BOTTOM = "<GSpherical:StereoMode>top-bottom</GSpherical:StereoMode>";

@@ -123,7 +123,7 @@ std::cout <<  "VAROL2: name: " << name << " size: " << iSize << " IsBox: " << bI
   pNewBox->m_iContentSize = iSize - iHeaderSize;
   pNewBox->m_iPadding     = iPadding;
 
-std::cout << "  VAROL:: name: " << name << " pos: " << iPos << " hdrSize: " << iHeaderSize << " padding: " << iPadding << std::endl;
+std::cout << "  VAROL:: name: " << pNewBox->name ( ) << " pos: " << iPos << " hdrSize: " << iHeaderSize << " padding: " << iPadding << std::endl;
 
   pNewBox->m_listContents = load_multiple ( fs, iPos + iHeaderSize + iPadding, iPos + iSize );
 
@@ -173,7 +173,7 @@ void Container::print_structure ( const char *pIndent )
   // Prints the box structure and recurses on contents."""
   uint32_t iSize1 = m_iHeaderSize;
   uint32_t iSize2 = m_iContentSize;
-  std::cout <<  "{" << pIndent << "} {" << m_name << "} [{" << iSize1 << "}, {" << iSize2 << "}]" << std::endl;
+  std::cout <<  "{" << pIndent << "} {" << name ( ) << "} [{" << iSize1 << "}, {" << iSize2 << "}]" << std::endl;
 
   int32_t iCount = m_listContents.size ( );
   std::string strIndent = pIndent;
@@ -256,7 +256,8 @@ bool Container::merge ( Box *pElem )
 void Container::save ( std::fstream &fsIn, std::fstream &fsOut, int32_t iDelta )
 {
   // Saves box to out_fh reading uncached content from in_fh.
-  // iDelte : file change size for updating stco and co64 files.
+  // iDelta : file change size for updating stco and co64 files.
+  std::cout <<  " CONTAINER IN : name: " << name ( ) << std::endl;
   if ( m_iHeaderSize == 16 )  {
     writeUint32 ( fsOut, 1 );
     fsOut.write ( m_name, 4 );
