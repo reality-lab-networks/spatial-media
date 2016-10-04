@@ -285,7 +285,7 @@ int32_t Box::size ( )
 
 void Box::print_structure ( const char *pIndent )
 {
-  std::cout << "{" << pIndent << "}" << "{" << m_name << "} ";
+  std::cout << "{" << pIndent << "}" << "{" << name ( ) << "} ";
   std::cout << "[{" << m_iHeaderSize << "}, {" << m_iContentSize << "}]" << std::endl; 
 }
 
@@ -296,17 +296,16 @@ void Box::tag_copy ( std::fstream &fsIn, std::fstream &fsOut, int32_t iSize )
   //  On 32-bit systems reading / writing is limited to 2GB chunks.
   //  To prevent overflow, read/write 64 MB chunks.
   int32_t block_size = 64 * 1024 * 1024;
+  m_pContents = new uint8_t[block_size + 1];
   while ( iSize > block_size )  {
-    m_pContents = new uint8_t[iSize];
     fsIn.read   ( (char *)m_pContents, block_size );
     fsOut.write ( (char *)m_pContents, block_size );
-    iSize = iSize - block_size;
-    fsIn.read   ( (char *)m_pContents, iSize );
-    fsOut.write ( (char *)m_pContents, iSize );
-    // contents = in_fh.read(size)
-    // out_fh.write(contents)
+    iSize -= block_size;
   }
+  fsIn.read   ( (char *)m_pContents, iSize );
+  fsOut.write ( (char *)m_pContents, iSize );
 }
+
 /* void Box::index_copy ( std::fstream &fsIn, std::fstream &fsOut, Box *pBox, bool bBigMode, int32_t iDelta )
 {
   // Update and copy index table for stco/co64 files.

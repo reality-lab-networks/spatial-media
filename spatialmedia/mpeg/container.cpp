@@ -257,7 +257,7 @@ void Container::save ( std::fstream &fsIn, std::fstream &fsOut, int32_t iDelta )
 {
   // Saves box to out_fh reading uncached content from in_fh.
   // iDelta : file change size for updating stco and co64 files.
-  std::cout <<  " CONTAINER IN : name: " << name ( ) << std::endl;
+  std::cout <<  " CONTAINER IN : name: " << name ( ) << " size: " << size ( ) << std::endl;
   if ( m_iHeaderSize == 16 )  {
     writeUint32 ( fsOut, 1 );
     fsOut.write ( m_name, 4 );
