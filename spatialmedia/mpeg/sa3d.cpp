@@ -33,7 +33,7 @@
 SA3DBox::SA3DBox ( Box * )
   : Box ( )
 {
-  memcpy ( m_name, constants::TAG_SA3D, sizeof ( constants::TAG_SA3D ) );
+  memcpy ( m_name, constants::TAG_SA3D, 4 );
   m_iHeaderSize    = 8;
   m_iPosition      = 0;
   m_iContentSize   = -1;
@@ -100,7 +100,7 @@ Box *SA3DBox::create ( int32_t iNumChannels, AudioMetadata &amData )
 
   SA3DBox *pNewBox = new SA3DBox ( );
   pNewBox->m_iHeaderSize   = 8;
-  memcpy ( pNewBox->m_name, constants::TAG_SA3D, sizeof ( constants::TAG_SA3D ) );
+  memcpy ( pNewBox->m_name, constants::TAG_SA3D, 4 );
   pNewBox->m_iVersion       = 0; // # uint8
   pNewBox->m_iContentSize += 1; // # uint8
 //  pNewBox->ambisonic_type = // SA3DBox.ambisonic_types[audio_metadata["ambisonic_type"]]

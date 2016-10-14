@@ -82,8 +82,8 @@ AudioMetadata *Metadata::getAudio ( )
 }
 
 ParsedMetadata::ParsedMetadata ( )
-  : Metadata ( )
 {
+  m_pAudio = NULL;
   m_iNumAudioChannels = 0;
 }
 
@@ -359,40 +359,8 @@ std::map<std::string, std::string> Utils::parse_spherical_xml ( uint8_t *pConten
 
   return m_mapSphericalDictionary;
 }
-/*
-def parse_spherical_xml(contents, console):
-    try:
-        parsed_xml = xml.etree.ElementTree.XML(contents)
-    except xml.etree.ElementTree.ParseError:
-        try:
-            index = contents.find("<rdf:SphericalVideo")
-            if index != -1:
-                index += len("<rdf:SphericalVideo")
-                contents = contents[:index] + RDF_PREFIX + contents[index:]
-            parsed_xml = xml.etree.ElementTree.XML(contents)
-            console("\t\tWarning missing rdf prefix:", RDF_PREFIX)
-        except xml.etree.ElementTree.ParseError as e:
-            console("\t\tParser Error on XML")
-            console(e)
-            console(contents)
-            return
 
-    sphericalDictionary = dict()
-    for child in parsed_xml.getchildren():
-        if child.tag in SPHERICAL_TAGS.keys():
-            console("\t\t" + SPHERICAL_TAGS[child.tag]
-                    + " = " + child.text)
-            sphericalDictionary[SPHERICAL_TAGS[child.tag]] = child.text
-        else:
-            tag = child.tag
-            if child.tag[:len(spherical_prefix)] == spherical_prefix:
-                tag = child.tag[len(spherical_prefix):]
-            console("\t\tUnknown: " + tag + " = " + child.text)
-
-    return sphericalDictionary
-*/
-
-Metadata *Utils::parse_spherical_mpeg4 ( Mpeg4Container *pMPEG4, std::fstream &file ) // return metadata
+ParsedMetadata *Utils::parse_spherical_mpeg4 ( Mpeg4Container *pMPEG4, std::fstream &file ) // return metadata
 {
   // pMPEG4 is Mpeg4 file structure to add metadata.
   // file: handle, Source for uncached file contents.
@@ -443,12 +411,8 @@ Metadata *Utils::parse_spherical_mpeg4 ( Mpeg4Container *pMPEG4, std::fstream &f
             file.read ( pNewedBuffer, pSub->m_iContentSize - 16);
             pContents = (uint8_t *)pNewedBuffer;
           }
-std::cout << " VAROL 3 : " << ( pSub->m_iContentSize - 16 )  << std::endl;
           // metadata.video[trackName] = parse_spherical_xml(contents, console)
           std::map<std::string, std::string> map = parse_spherical_xml ( pContents ); 
-// TODO: Figure out what type metadata.video should actually be
-//       main.cpp :: md.setVideoXML ( strVideoXML );
-//          pMetadata->setVideoXML ( trackName, map );
         }
       }
 
@@ -487,13 +451,12 @@ std::cout << " VAROL 3 : " << ( pSub->m_iContentSize - 16 )  << std::endl;
                   continue;
 
                 pMetadata->m_iNumAudioChannels = get_num_audio_channels ( pSTSD, file );
-                std::cout << "SOUND SAMLE " << pSA3D->m_name[0] << pSA3D->m_name[1] << pSA3D->m_name[2] << pSA3D->m_name[3];
+                std::cout << "SOUND SAMLE " << pSA3D->name ( );
                 std::cout << "  num Channels: " << pMetadata->m_iNumAudioChannels << std::endl;
 
                 std::vector<Box *>::iterator it7 = pSA3D->m_listContents.begin ( );
                 while ( it7 != pSA3D->m_listContents.end ( ) )  {
                   Container *pItem = (Container *)*it7++;
-std::cout << "SA3D Container Names : " << pItem->m_name << std::endl;
                   if ( memcmp ( pItem->m_name, constants::TAG_SA3D, 4 ) == 0 )  {
                     SA3DBox *pSA = (SA3DBox *)pItem;
                     pSA->print_box ( );
@@ -756,7 +719,7 @@ uint32_t Utils::get_sample_description_num_channels ( Container *pSample, std::f
   }
   else  {
     inFile.seekg ( iPos );
-    std::cerr << "Unsupported version for " << pSample->m_name << " box" << std::endl;
+    std::cerr << "Unsupported version for " << pSample->name ( ) << " box" << std::endl;
     return -1;
   }
   inFile.seekg ( iPos );

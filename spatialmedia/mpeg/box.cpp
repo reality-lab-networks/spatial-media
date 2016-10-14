@@ -240,8 +240,6 @@ void Box::save ( std::fstream &fsIn, std::fstream &fsOut, int32_t iDelta )
 {
   // Save box contents prioritizing set contents.
   // iDelta = index update amount
-  std::cout <<  "SAVE IN : name: " << name ( ) << std::endl;
-
   if ( m_iHeaderSize == 16 )  {
     uint64_t iBigSize = htobe64 ( (uint64_t)size ( ) );
     writeUint32 ( fsOut, 1 );
@@ -254,12 +252,6 @@ void Box::save ( std::fstream &fsIn, std::fstream &fsOut, int32_t iDelta )
   }
   if ( content_start ( ) )
     fsIn.seekg ( content_start ( ) );
-
-char *p = (char *)"-";
-if ( m_pContents )
-p = (char *)m_pContents;
-
-  std::cout << "Name: " << name ( ) << " cnotents: " << m_iContentSize << std::endl;
 
   if ( memcmp ( m_name, constants::TAG_STCO, 4 ) == 0 )
     stco_copy ( fsIn, fsOut, this, iDelta );
@@ -306,41 +298,6 @@ void Box::tag_copy ( std::fstream &fsIn, std::fstream &fsOut, int32_t iSize )
   fsOut.write ( (char *)m_pContents, iSize );
 }
 
-/* void Box::index_copy ( std::fstream &fsIn, std::fstream &fsOut, Box *pBox, bool bBigMode, int32_t iDelta )
-{
-  // Update and copy index table for stco/co64 files.
-  // pBox: box, stco/co64 box to copy.
-  // bBigMode: if true == BigEndian Uint64, else BigEndian Int32
-  // iDelta: int, offset change for index entries.
-  std::fstream &fs = fsIn;
-  if ( ! pBox->m_pContents )
-    fs.seekg ( pBox->content_start ( ) );
-  else  {
-    //fs = StringIO.StringIO ( box->m_pContents );
-    return index_copy_from_contents ( fsOut, pBox, bBigMode, iDelta );
-  }
-
-  uint32_t iHeader = readUint32 ( fs );
-  uint32_t iValues = readUint32 ( fs );
-
-std::cout <<  "index_copy :: HDR: " << iHeader << " VAL: " << iValues << std::endl;
-
-  writeUint32 ( fsOut, iHeader );
-  writeUint32 ( fsOut, iValues );
-  if ( bBigMode )  {
-   for ( int i=0; i<iValues; i++ )  {
-      uint64_t iVal = readUint64 ( fsIn ) + iDelta;
-      writeUint64 ( fsOut, iVal );
-    }
-  }
-  else  {
-    for ( int i=0; i<iValues; i++ )  {
-      uint32_t iVal = readUint32 ( fsIn ) + iDelta;
-      writeUint32 ( fsOut, iVal );
-    }
-  }
-} */
-
 void Box::index_copy ( std::fstream &fsIn, std::fstream &fsOut, Box *pBox, bool bBigMode, int32_t iDelta )
 {
   // Update and copy index table for stco/co64 files.
@@ -358,9 +315,6 @@ void Box::index_copy ( std::fstream &fsIn, std::fstream &fsOut, Box *pBox, bool 
   uint32_t iHeader = readUint32 ( fs );
   uint32_t iValues = readUint32 ( fs );
  
-std::cout <<  "index_copy :: HDR: " << iHeader << " VAL: " << iValues << std::endl;
-std::cout <<  "index_copy :: big: " << bBigMode << " DELTA: " << iDelta << std::endl;
-
   writeUint32 ( fsOut, iHeader );
   writeUint32 ( fsOut, iValues );
   if ( bBigMode )  {
@@ -372,28 +326,10 @@ std::cout <<  "index_copy :: big: " << bBigMode << " DELTA: " << iDelta << std::
   else  {
     for ( int i=0; i<iValues; i++ )  {
       uint32_t iVal = readUint32 ( fsIn ) + iDelta;
-if ( i<10 )
-std::cout <<  "index_copy ::    READ: " << iVal << std::endl;
-
       writeUint32 ( fsOut, iVal );
     }
   }
 }
-/* def index_copy(in_fh, out_fh, box, mode, mode_length, delta=0):
-   """Update and copy index table for stco/co64 files.
-    Args:
-      mode: string, bit packing mode for index entries.
-      mode_length: int, number of bytes for index entires.
-      delta: int, offset change for index entries.
-    """
-    print ( "index_copy :: HDR: ", header, " VAL: ", values )
-
-    for i in range(values):
-        content = fh.read(mode_length)
-        content = struct.unpack(mode, content)[0] + delta
-        new_contents.append(struct.pack(mode, content))
-    out_fh.write("".join(new_contents))
-*/
 
 uint32_t Box::uint32FromCont ( int32_t &iIDX )
 {

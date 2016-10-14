@@ -47,7 +47,7 @@ static std::string SPHERICAL_XML_HEADER = "<?xml version=\"1.0\"?>"\
 
 static std::string SPHERICAL_XML_CONTENTS = "<GSpherical:Spherical>true</GSpherical:Spherical>"\
     "<GSpherical:Stitched>true</GSpherical:Stitched>"\
-    "<GSpherical:StitchingSoftware>360Tube stitching</GSpherical:StitchingSoftware>"\
+    "<GSpherical:StitchingSoftware>Spherical Metadata Tool</GSpherical:StitchingSoftware>"\
     "<GSpherical:ProjectionType>equirectangular</GSpherical:ProjectionType>";
 
 static std::string SPHERICAL_XML_CONTENTS_TOP_BOTTOM = "<GSpherical:StereoMode>top-bottom</GSpherical:StereoMode>";
@@ -107,7 +107,7 @@ class Metadata
 };
 
 
-class ParsedMetadata : public Metadata
+class ParsedMetadata// : public Metadata
 {
   public:
     ParsedMetadata ( );
@@ -116,6 +116,8 @@ class ParsedMetadata : public Metadata
 
 //  private:
     uint32_t m_iNumAudioChannels;
+    std::map<std::string, std::string> m_video;
+    AudioMetadata *m_pAudio;
 };
 
 
@@ -131,7 +133,7 @@ class Utils
     bool mpeg4_add_audio_metadata ( Mpeg4Container *, std::fstream &, AudioMetadata * );
     bool inject_spatial_audio_atom( std::fstream &, Box *, AudioMetadata * );
     std::map<std::string, std::string> parse_spherical_xml ( uint8_t * ); // return sphericalDictionary
-    Metadata *parse_spherical_mpeg4 ( Mpeg4Container *,std::fstream & ); // return metadata
+    ParsedMetadata *parse_spherical_mpeg4 ( Mpeg4Container *,std::fstream & ); // return metadata
     void parse_mpeg4     ( std::string & );
     void inject_mpeg4    ( std::string &, std::string &, Metadata * );
     void parse_metadata  ( std::string & );

@@ -42,7 +42,6 @@ Box *Container::load ( std::fstream &fs, uint32_t iPos, uint32_t iEnd )
 //  if ( iPos == 0 )
 //       iPos = fs.tellg ( );
 
-std::cout << "VAROL1: After: " << iPos << std::endl;
   fs.seekg ( iPos );
   uint32_t iHeaderSize = 8;
   uint32_t t, iSize = readUint32 ( fs );
@@ -57,8 +56,6 @@ std::cout << "VAROL1: After: " << iPos << std::endl;
       break;
     }
   }
-std::cout <<  "VAROL2: name: " << name << " size: " << iSize << " IsBox: " << bIsBox << std::endl;
-
 
   // Handle the mp4a decompressor setting (wave -> mp4a).
   if ( memcmp ( name, constants::TAG_MP4A, 4 ) == 0 && iSize == 12 ) 
@@ -122,9 +119,6 @@ std::cout <<  "VAROL2: name: " << name << " size: " << iSize << " IsBox: " << bI
   pNewBox->m_iHeaderSize  = iHeaderSize;
   pNewBox->m_iContentSize = iSize - iHeaderSize;
   pNewBox->m_iPadding     = iPadding;
-
-std::cout << "  VAROL:: name: " << pNewBox->name ( ) << " pos: " << iPos << " hdrSize: " << iHeaderSize << " padding: " << iPadding << std::endl;
-
   pNewBox->m_listContents = load_multiple ( fs, iPos + iHeaderSize + iPadding, iPos + iSize );
 
   if ( pNewBox->m_listContents.empty ( ) )  {
@@ -137,7 +131,6 @@ std::cout << "  VAROL:: name: " << pNewBox->name ( ) << " pos: " << iPos << " hd
 
 std::vector<Box *> Container::load_multiple ( std::fstream &fs, uint32_t iPos, uint32_t iEnd )
 {
-std::cout << "VAROL { pos: " << iPos << std::endl;
   std::vector<Box *> list, empty;
   while ( iPos < iEnd )  {
     Box *pBox = load ( fs, iPos, iEnd );
@@ -149,7 +142,6 @@ std::cout << "VAROL { pos: " << iPos << std::endl;
     list.push_back ( pBox );
     iPos = pBox->m_iPosition + pBox->size ( );
   }
-std::cout << "VAROL } " << std:: endl;
   return list;
 }
 
@@ -164,7 +156,7 @@ void Container::resize ( )
       Container *p = (Container *)pBox;
       p->resize ( );
     }
-    m_iContentSize += pBox->m_iContentSize;
+    m_iContentSize += pBox->size ( ); //m_iContentSize;
   }
 }
 
@@ -257,7 +249,6 @@ void Container::save ( std::fstream &fsIn, std::fstream &fsOut, int32_t iDelta )
 {
   // Saves box to out_fh reading uncached content from in_fh.
   // iDelta : file change size for updating stco and co64 files.
-  std::cout <<  " CONTAINER IN : name: " << name ( ) << " size: " << size ( ) << std::endl;
   if ( m_iHeaderSize == 16 )  {
     writeUint32 ( fsOut, 1 );
     fsOut.write ( m_name, 4 );

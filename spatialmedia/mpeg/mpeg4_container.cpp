@@ -76,7 +76,6 @@ Mpeg4Container *Mpeg4Container::load ( std::fstream &fsIn ) //, uint32_t /* iPos
   }
   pNewBox->m_iFirstMDatPos  = pNewBox->m_pFirstMDatBox->m_iPosition; //m_iFirstMDatPos;
   pNewBox->m_iFirstMDatPos += pNewBox->m_pFirstMDatBox->m_iHeaderSize;
-std::cout << " Added: " << pNewBox->m_iFirstMDatPos << std::endl;
   pNewBox->m_iContentSize   = 0;
   it = pNewBox->m_listContents.begin ( );
   while ( it != pNewBox->m_listContents.end ( ) )  {
@@ -117,7 +116,6 @@ void Mpeg4Container::save ( std::fstream &fsIn, std::fstream &fsOut, int32_t )
   std::vector<Box *>::iterator it = m_listContents.begin ( );
   while ( it != m_listContents.end () )  {
     Box *pBox = *it++;
-    std::cout << "IN LOOP : " << pBox->name ( ) << " newPos: " << iNewPos << std::endl;
     if ( memcmp( pBox->m_name, constants::TAG_MDAT, 4 ) == 0 )  {
       iNewPos += pBox->m_iHeaderSize;
       break;
@@ -125,13 +123,10 @@ void Mpeg4Container::save ( std::fstream &fsIn, std::fstream &fsOut, int32_t )
     iNewPos += pBox->size ( );
   }
   uint32_t iDelta = iNewPos - m_iFirstMDatPos;
-  std::cout << "mpeg4_container : name: " << name ( ) << " pos: " << iNewPos <<  " first: " << m_iFirstMDatPos << std::endl;
   it = m_listContents.begin ( );
   while ( it != m_listContents.end () )  {
     Box *pBox = *it++; 
-    std::cout << "mpeg4_container : name: " << pBox->name ( ) << " delta: " << iDelta << std::endl;
     pBox->save ( fsIn, fsOut, iDelta );
   }
-  std::cout << "mpeg4_container : OUT  " << std::endl;
 }
 
