@@ -27,6 +27,7 @@
 
 #include <fstream>
 #include <vector>
+#include <map>
 
 #include "box.h"
 
@@ -56,6 +57,10 @@ class SA3DBox : public Box
     std::string mapToString ( );
 
   public:
+    std::map<std::string, int32_t> m_AmbisonicTypes;
+    std::map<std::string, int32_t> m_AmbisonicOrderings;
+    std::map<std::string, int32_t> m_AmbisonicNormalizations;
+
 //    int32_t  m_iPosition;
     uint8_t  m_iVersion;
     uint8_t  m_iAmbisonicType;

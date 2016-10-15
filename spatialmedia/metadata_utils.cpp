@@ -412,7 +412,7 @@ ParsedMetadata *Utils::parse_spherical_mpeg4 ( Mpeg4Container *pMPEG4, std::fstr
             pContents = (uint8_t *)pNewedBuffer;
           }
           // metadata.video[trackName] = parse_spherical_xml(contents, console)
-          std::map<std::string, std::string> map = parse_spherical_xml ( pContents ); 
+          pMetadata->m_video[trackName] = parse_spherical_xml ( pContents ); 
         }
       }
 
@@ -451,18 +451,13 @@ ParsedMetadata *Utils::parse_spherical_mpeg4 ( Mpeg4Container *pMPEG4, std::fstr
                   continue;
 
                 pMetadata->m_iNumAudioChannels = get_num_audio_channels ( pSTSD, file );
-                std::cout << "SOUND SAMLE " << pSA3D->name ( );
-                std::cout << "  num Channels: " << pMetadata->m_iNumAudioChannels << std::endl;
-
                 std::vector<Box *>::iterator it7 = pSA3D->m_listContents.begin ( );
                 while ( it7 != pSA3D->m_listContents.end ( ) )  {
                   Container *pItem = (Container *)*it7++;
                   if ( memcmp ( pItem->m_name, constants::TAG_SA3D, 4 ) == 0 )  {
                     SA3DBox *pSA = (SA3DBox *)pItem;
                     pSA->print_box ( );
-// TODO: Figure out what type metadata.audio should be ( main.cpp has a different type than SA3DBox )
-//       main.cpp :: md.setAudio ( (void *)&g_DefAudioMetadata );
-//                    pMetadata->setAudio ( pSA );
+                    pMetadata->m_pAudio = new SA3DBox ( *pSA );
                   }
                 }
               }

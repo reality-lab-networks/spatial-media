@@ -43,6 +43,10 @@ SA3DBox::SA3DBox ( Box * )
   m_iAmbisonicChannelOrdering = 0;
   m_iAmbisonicNormalization   = 0;
   m_iNumChannels   = 0;
+
+  m_AmbisonicTypes["periphonic"]    = 0;
+  m_AmbisonicOrderings["ACN"]       = 0;
+  m_AmbisonicNormalizations["SN3D"] = 0;
 }
 
 SA3DBox::~SA3DBox ( )
@@ -103,13 +107,13 @@ Box *SA3DBox::create ( int32_t iNumChannels, AudioMetadata &amData )
   memcpy ( pNewBox->m_name, constants::TAG_SA3D, 4 );
   pNewBox->m_iVersion       = 0; // # uint8
   pNewBox->m_iContentSize += 1; // # uint8
-//  pNewBox->ambisonic_type = // SA3DBox.ambisonic_types[audio_metadata["ambisonic_type"]]
+//  pNewBox->m_iAmbisonicType= pNewBox->m_AmbisonicTypes[amData["ambisonic_type"]]; 
   pNewBox->m_iContentSize += 1; // # uint8
 //  pNewBox->m_iAmbisonicOrder = amData["ambisonic_order"];
   pNewBox->m_iContentSize += 4; // # uint32
-//  pNewBox->m_iAmbisonicChannelOrdering = // SA3DBox.ambisonic_orderings[ audio_metadata["ambisonic_channel_ordering"]]
+//  pNewBox->m_iAmbisonicChannelOrdering = pNewBox->m_AmbisonicOrderings[ amData["ambisonic_channel_ordering"]]
   pNewBox->m_iContentSize += 1; // # uint8
-//  pNewBox->m_iAmbisonicNormalization = // SA3DBox.ambisonic_normalizations[ audio_metadata["ambisonic_normalization"]]
+//  pNewBox->m_iAmbisonicNormalization = pNewBox->m_AmbisonicNormalizations[ amData["ambisonic_normalization"]]
   pNewBox->m_iContentSize += 1; // # uint8
   pNewBox->m_iNumChannels = iNumChannels;
   pNewBox->m_iContentSize += 4; // # uint32

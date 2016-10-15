@@ -156,7 +156,7 @@ void Container::resize ( )
       Container *p = (Container *)pBox;
       p->resize ( );
     }
-    m_iContentSize += pBox->size ( ); //m_iContentSize;
+    m_iContentSize += pBox->size ( );
   }
 }
 

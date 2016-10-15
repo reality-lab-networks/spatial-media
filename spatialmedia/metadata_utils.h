@@ -116,8 +116,10 @@ class ParsedMetadata// : public Metadata
 
 //  private:
     uint32_t m_iNumAudioChannels;
-    std::map<std::string, std::string> m_video;
-    AudioMetadata *m_pAudio;
+
+    typedef std::map<std::string, std::string> videoEntry;
+    std::map<std::string, videoEntry> m_video;
+    SA3DBox *m_pAudio;
 };
 
 
