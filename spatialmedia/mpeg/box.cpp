@@ -166,7 +166,7 @@ void Box::writeUint64 ( std::fstream &fs, uint64_t iVal )
     uint64_t iVal;
     char bytes[8];
   } buf;
-  buf.iVal = htobe32 ( iVal );
+  buf.iVal = htobe64 ( iVal );
   fs.write ( (char *)buf.bytes, 8 );
 }
 
@@ -241,7 +241,7 @@ void Box::save ( std::fstream &fsIn, std::fstream &fsOut, int32_t iDelta )
   // Save box contents prioritizing set contents.
   // iDelta = index update amount
   if ( m_iHeaderSize == 16 )  {
-    uint64_t iBigSize = htobe64 ( (uint64_t)size ( ) );
+    uint64_t iBigSize = size ( );
     writeUint32 ( fsOut, 1 );
     fsOut.write ( m_name,4 );
     writeUint64 ( fsOut, iBigSize );
@@ -250,6 +250,7 @@ void Box::save ( std::fstream &fsIn, std::fstream &fsOut, int32_t iDelta )
     writeUint32 ( fsOut, size ( ) );
     fsOut.write ( m_name,  4 );
   }
+
   if ( content_start ( ) )
     fsIn.seekg ( content_start ( ) );
 
