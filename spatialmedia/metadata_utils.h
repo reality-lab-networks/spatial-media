@@ -25,7 +25,7 @@
 #include <fstream>
 #include <map>
 
-#include "mxml.h"
+#include "third_party/mxml-2.10/mxml.h"
 
 #include "parser.h"
 #include "mpeg/constants.h"

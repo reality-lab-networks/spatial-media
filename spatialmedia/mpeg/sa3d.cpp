@@ -129,8 +129,7 @@ Box *SA3DBox::create ( int32_t iNumChannels, AudioMetadata &amData )
 
 void SA3DBox::save ( std::fstream &fsIn, std::fstream &fsOut )
 {
-  char tmp, name[4];
-  int iTmp = 1;
+  //char tmp, name[4];
   uint64_t iSize = m_iContentSize;
  
   if ( m_iHeaderSize == 16 )  {

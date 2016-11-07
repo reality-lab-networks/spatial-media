@@ -19,6 +19,7 @@
 #include <iostream>
 #include <assert.h>
 #include <string.h>
+#include <endian.h>
 
 #include "constants.h"
 #include "container.h"
