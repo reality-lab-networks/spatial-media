@@ -1,25 +1,24 @@
 /*****************************************************************************
- * 
+ *
  * Copyright 2016 Varol Okan. All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  ****************************************************************************/
 
 // Tool for loading mpeg4 files and manipulating atoms.
 #include <string.h>
 #include <iostream>
-#include <endian.h>
 
 #include "constants.h"
 #include "box.h"
@@ -199,7 +198,7 @@ Box *Box::load ( std::fstream &fs, uint32_t iPos, uint32_t iEnd )
     iSize = readUint64 ( fs );
     iHeaderSize = 16;
   }
-  if ( iSize < 8 )  { 
+  if ( iSize < 8 )  {
     std::cerr << "Error, invalid size " << iSize << " in " << name << " at " << iPos << std::endl;
     return NULL;
   }
@@ -280,7 +279,7 @@ int32_t Box::size ( )
 void Box::print_structure ( const char *pIndent )
 {
   std::cout << "{" << pIndent << "}" << "{" << name ( ) << "} ";
-  std::cout << "[{" << m_iHeaderSize << "}, {" << m_iContentSize << "}]" << std::endl; 
+  std::cout << "[{" << m_iHeaderSize << "}, {" << m_iContentSize << "}]" << std::endl;
 }
 
 void Box::tag_copy ( std::fstream &fsIn, std::fstream &fsOut, int32_t iSize )
@@ -316,7 +315,7 @@ void Box::index_copy ( std::fstream &fsIn, std::fstream &fsOut, Box *pBox, bool 
 
   uint32_t iHeader = readUint32 ( fs );
   uint32_t iValues = readUint32 ( fs );
- 
+
   writeUint32 ( fsOut, iHeader );
   writeUint32 ( fsOut, iValues );
   if ( bBigMode )  {

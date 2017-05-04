@@ -485,7 +485,6 @@ void Utils::parse_mpeg4 ( std::string &strFileName )
     std::cerr << "Error, file could not be opened." << std::endl;
     return;
   }
-  std::cout << "File loaded." << std::endl;
   parse_spherical_mpeg4 ( pMPEG4, file );
 }
 
@@ -536,7 +535,6 @@ void Utils::parse_metadata ( std::string &strFile )
   if ( idx != std::string::npos )
     strExt = strFile.substr ( idx );
 
-  std::cout << "Processing: " << strFile << std::endl;
   if ( ! inArray ( (char *)strExt.c_str ( ), MPEG_FILE_EXTENSIONS, iArraySize ) )  {
     std::cerr << "Unknown file type" << std::endl;
     return;
@@ -562,7 +560,6 @@ void Utils::inject_metadata ( std::string &strInFile, std::string &strOutFile, M
   if ( idx != std::string::npos )
     strExt = strInFile.substr ( idx );
 
-  std::cout << "Processing: " << strInFile << std::endl;
   if ( ! inArray ( (char *)strExt.c_str ( ), MPEG_FILE_EXTENSIONS, iArraySize ) )  {
     std::cerr << "Unknown file type" << std::endl;
     return;
