@@ -24,6 +24,7 @@
 #include <fstream>
 
 #ifdef __APPLE__
+
 #include <machine/endian.h>
 #include <libkern/OSByteOrder.h>
 
@@ -45,9 +46,7 @@
 #define __BIG_ENDIAN    BIG_ENDIAN
 #define __LITTLE_ENDIAN LITTLE_ENDIAN
 #define __BYTE_ORDER    BYTE_ORDER
-#else
-#include
-#include
+
 #endif
 
 class Box
