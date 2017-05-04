@@ -41,7 +41,7 @@ namespace SpatialMedia
 
 Parser::Parser ( )
 {
-  m_bInject       = true;
+  m_bInject       = false;
   m_StereoMode    = SM_NONE;
   for ( int t=0; t<6; t++ )
     m_crop[t]     = 0;
@@ -60,21 +60,33 @@ void Parser::parseCommandLine ( int argc, char *argv[] )
   int iChar = 0;
   static struct option longOpts[] = {
     { "help",          no_argument, 0, 'h' },
-    { "inject",        no_argument, 0, 'i' },
+    { "inject",        no_argument, 0, 'j' },
     { "stereo",  required_argument, 0, 's' },
     { "crop",    required_argument, 0, 'c' },
     { "spatial-audio", no_argument, 0, 'a' },
+    { "input", required_argument, 0, 'i' },
+    { "output", required_argument, 0, 'o' },
     { 0, 0, 0, 0 } };
 
   while ( true )  {
-    iChar = getopt_long_only ( argc, argv, "?hias:c:", longOpts, NULL );
+    iChar = getopt_long_only ( argc, argv, "?hjas:i:o:c:", longOpts, NULL );
     if ( iChar == -1 )
       break;
 
     switch ( iChar )  {
-    case 'i':
+    case 'j':
       m_bInject = true;
     break;
+    case 'i': {
+      std::string str ( optarg );
+      m_strInFile = str;
+    }
+      break;
+    case 'o': {
+      std::string str ( optarg );
+      m_strOutFile = str;
+    }
+      break;
     case 'a':
       m_bSpatialAudio = true;
     break;
@@ -106,24 +118,21 @@ void Parser::parseCommandLine ( int argc, char *argv[] )
       exit ( 0 );
     }
   }
-  if ( argc > 2 )
-    m_strInFile = argv[argc-2];
-  if ( argc > 3 )
-    m_strOutFile = argv[argc-1];
 }
 
 void Parser::printHelp ( )
 {
-  cout << "usage: spatialmedia [options] [files...]" << endl;
+  cout << "usage: spatialmedia [options]" << endl;
   cout << endl;
   cout << "By default prints out spatial media metadata from specified files." << endl;
   cout << endl;
-  cout << "positional arguments:" << endl;
-  cout << "  file                  input/output files" << endl;
+  cout << "required:" << endl;
+  cout << "  -i, --input           input file name" << endl;
   cout << endl;
-  cout << "optional arguments:" << endl;
+  cout << "optional:" << endl;
+  cout << "  -o, --output           output file name" << endl;
   cout << "  -h, --help            show this help message and exit" << endl;
-  cout << "  -i, --inject          injects spatial media metadata into the first file" << endl;
+  cout << "  -j, --inject          injects spatial media metadata into the first file" << endl;
   cout << "                        specified (.mp4 or .mov) and saves the result to the" << endl;
   cout << "                        second file specified" << endl;
   cout << endl;
