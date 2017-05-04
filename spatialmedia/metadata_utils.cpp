@@ -1,19 +1,19 @@
 /*****************************************************************************
- * 
+ *
  * Copyright 2016 Varol Okan. All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  ****************************************************************************/
 
 #include <iostream>
@@ -176,7 +176,7 @@ bool Utils::mpeg4_add_spherical ( Mpeg4Container *pMPEG4, std::fstream &inFile, 
             bAdded = true;
             break;
           }
-        }        
+        }
         if ( bAdded )  {
           if ( ! pBox->add ( spherical_uuid ( strMetadata ) ) )
             return true;
@@ -207,7 +207,7 @@ bool Utils::mpeg4_add_spatial_audio ( Mpeg4Container *pMPEG4, std::fstream &inFi
     Container *pBox = (Container *)*it++;
     if ( memcmp ( pBox->m_name, constants::TAG_TRAK, 4 ) != 0 )
       continue;
-    
+
     std::vector<Box *>::iterator it2 = pBox->m_listContents.begin ( );
     while ( it2 != pBox->m_listContents.end ( ) )  {
       Container *pSub = (Container *)*it2++;
@@ -225,7 +225,7 @@ bool Utils::mpeg4_add_spatial_audio ( Mpeg4Container *pMPEG4, std::fstream &inFi
         inFile.seekg( iPos );
         inFile.read ( name, 4 );
         if ( memcmp ( name, constants::TAG_SOUN, 4 ) == 0 )
-          return inject_spatial_audio_atom ( inFile, pSub, pAudio ); 
+          return inject_spatial_audio_atom ( inFile, pSub, pAudio );
       }
     }
   }
@@ -249,7 +249,7 @@ bool inArray ( char *pName, const char **ppArray, int iSize )
   for ( int t=0; t<iSize; t++ )  {
     if ( memcmp ( pName, ppArray[t], 4 ) == 0 )
       return true;
-  }  
+  }
 
   return false;
 }
@@ -258,22 +258,22 @@ bool Utils::inject_spatial_audio_atom( std::fstream &inFile, Box *pAudioMediaAto
 {
   if ( ! pAudioMediaAtom || ! pAudio )
     return false;
-  
+
   int iArraySize = sizeof ( constants::SOUND_SAMPLE_DESCRIPTIONS );
   Container *pMediaAtom = (Container *)pAudioMediaAtom;
-  
+
   std::vector<Box *>::iterator it = pMediaAtom->m_listContents.begin ( );
   while ( it != pMediaAtom->m_listContents.end ( ) )  {
     Container *pAtom = (Container *)*it++;
     if ( memcmp ( pAtom->m_name, constants::TAG_MINF, 4 ) != 0 )
       continue;
-    
+
     std::vector<Box *>::iterator it2 = pAtom->m_listContents.begin ( );
     while ( it2 != pAtom->m_listContents.end ( ) )  {
       Container *pElement = (Container *)*it2++;
       if ( memcmp ( pElement->m_name, constants::TAG_STBL, 4 ) != 0 )
         continue;
-      
+
       std::vector<Box *>::iterator it3 = pElement->m_listContents.begin ( );
       while ( it3 != pElement->m_listContents.end ( ) )  {
         Container *pSub = (Container *)*it3++;
@@ -334,12 +334,12 @@ std::map<std::string, std::string> Utils::parse_spherical_xml ( uint8_t *pConten
   std::string strText;
   mxml_node_t *pChild = mxmlGetFirstChild ( pNode );
   while ( pChild != NULL )  {
-    const char *pTag  = mxmlGetElement ( pChild ); 
+    const char *pTag  = mxmlGetElement ( pChild );
     const char *pText = mxmlGetOpaque  ( pChild );
     if ( pTag != NULL )  {
       const char *p = strchr ( pTag, ':' );
       if ( p )
-        pTag = p+1; 
+        pTag = p+1;
       if ( inArray ( (char *)pTag, SPHERICAL_TAGS_LIST, iArraySize ) )  {
         strText = "";
         if ( pText )
@@ -412,7 +412,7 @@ ParsedMetadata *Utils::parse_spherical_mpeg4 ( Mpeg4Container *pMPEG4, std::fstr
             pContents = (uint8_t *)pNewedBuffer;
           }
           // metadata.video[trackName] = parse_spherical_xml(contents, console)
-          pMetadata->m_video[trackName] = parse_spherical_xml ( pContents ); 
+          pMetadata->m_video[trackName] = parse_spherical_xml ( pContents );
         }
       }
 
@@ -435,7 +435,7 @@ ParsedMetadata *Utils::parse_spherical_mpeg4 ( Mpeg4Container *pMPEG4, std::fstr
           std::vector<Box *>::iterator it4 = pMDIA->m_listContents.begin ( );
           while ( it4 != pMDIA->m_listContents.end ( ) )  {
             Container *pSTBL = (Container *)*it4++;
-            if ( memcmp ( pSTBL->m_name, constants::TAG_STBL, 4 ) != 0 )  
+            if ( memcmp ( pSTBL->m_name, constants::TAG_STBL, 4 ) != 0 )
               continue;
 
             std::vector<Box *>::iterator it5 = pSTBL->m_listContents.begin ( );
@@ -513,7 +513,7 @@ void Utils::inject_mpeg4 ( std::string &strInFile, std::string &strOutFile, Meta
   }
   std::cout << "Saved file settings" << std::endl;
   parse_spherical_mpeg4 ( pMPEG4, inFile );
-  
+
   std::fstream outFile ( strOutFile.c_str ( ), std::ios::out | std::ios::binary );
   if ( ! outFile.is_open ( ) )  {
     std::cerr << "Error file: \"" << strOutFile << "\" could not create or do not have permission." << std::endl;
@@ -534,7 +534,7 @@ void Utils::parse_metadata ( std::string &strFile )
   std::string strExt;
   std::string::size_type idx = strFile.rfind ( '.' );
   if ( idx != std::string::npos )
-    strExt = strFile.substr ( idx + 1 );
+    strExt = strFile.substr ( idx );
 
   std::cout << "Processing: " << strFile << std::endl;
   if ( ! inArray ( (char *)strExt.c_str ( ), MPEG_FILE_EXTENSIONS, iArraySize ) )  {
@@ -672,7 +672,7 @@ int32_t Utils::get_num_audio_channels ( Container *pSTSD, std::fstream &inFile )
       return get_aac_num_channels ( pSample, inFile );
     else if ( inArray ( pSample->m_name, constants::SOUND_SAMPLE_DESCRIPTIONS, iArraySize ) )
       return get_sample_description_num_channels ( pSample, inFile );
-  } 
+  }
   return -1;
 }
 
@@ -683,7 +683,7 @@ uint32_t Utils::get_sample_description_num_channels ( Container *pSample, std::f
   int iPos = inFile.tellg ( );
   inFile.seekg ( pSample->content_start ( ) + 8 );
 
-  int16_t iAudioChannels, iSampleSizeBytes; 
+  int16_t iAudioChannels, iSampleSizeBytes;
   int16_t iVersion  = Box::readInt16 ( inFile );
   int16_t iRevLevel = Box::readInt16 ( inFile );
   int32_t iVendor   = Box::readInt32 ( inFile );
@@ -762,7 +762,7 @@ int32_t Utils::get_aac_num_channels ( Container *pBox, std::fstream &inFile )
     get_descriptor_length ( inFile );
     inFile.seekg ( 13, std::ios_base::cur ); // offset to the decoder specific config descriptor.
     char decoder_specific_descriptor_tag = Box::readInt8 ( inFile );
-    
+
     // Verify the read descriptor is a decoder specific info descriptor
     if ( decoder_specific_descriptor_tag != 5 )  {
       std::cerr << "Error: failed to read MP4 audio decoder specific config." << std::endl;
